@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reproductor de Videos - Carrusel</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            overflow: hidden;
+        }
+
+        video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        .video-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 2em;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="video-title" id="video-title"></div>
+    <video id="video-player" autoplay muted playsinline></video>
+
+
+    {{ videos|json_script:"videos-data" }}
+
+    <script>
+        const videos = JSON.parse(document.getElementById('videos-data').textContent);
+
+        const player = document.getElementById('video-player');
+        const titleDiv = document.getElementById('video-title');
+        let currentIndex = 0;
+
+        function playVideo(index) {
+            if (!videos.length) return;
+
+            player.src = videos[index].videofile;
+            titleDiv.textContent = videos[index].title;
+
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("No se pudo reproducir automáticamente:", error);
+                });
+            }
+        }
+
+        player.addEventListener('ended', () => {
+            currentIndex = (currentIndex + 1) % videos.length;
+            playVideo(currentIndex);
+        });
+
+        // Inicia el primer video
+        playVideo(currentIndex);
+    </script>
+</body>
+
+</html>
