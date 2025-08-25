@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Editar Video</title>
+    <title>Panel Editar Video</title>
     <link rel="stylesheet" href="{% static 'videos/css/edit_video.css' %}">
 </head>
 
@@ -14,8 +14,15 @@
         <h1>Editar "{{ video.title }}"</h1>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form.as_p }}
+            {{ form.title.errors }}
+            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+            {{ form.title }}
+
+            {{ form.videofile.errors }}
+            {{ form.videofile }} <!-- Aquí NO pones la etiqueta, solo el widget -->
+
             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </form>
         </form>
         <a href="{% url 'upload' %}" class="btn-link">Volver</a>
     </main>

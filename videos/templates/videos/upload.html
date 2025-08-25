@@ -10,33 +10,46 @@
 
 <body>
     <header>
-        Panel de Mercadotecnia ADICLA
+        <h1>Panel de Mercadotecnia ADICLA</h1>
     </header>
 
     <main>
-        <h1>Subir Video</h1>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary">Subir</button>
-        </form>
+        <!-- FORMULARIO -->
+        <section class="form-section">
+            <h2>Subir Video</h2>
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">📤 Subir</button>
+            </form>
+        </section>
 
-        <h2>Videos Subidos</h2>
-        <ul>
-            {% for video in videos %}
-            <li>
-                <span>{{ video.title }}</span>
-                <span>{{ video.uploaded_at|date:"d M Y H:i" }}</span>
-                <div class="actions">
-                    <a href="{% url 'edit_video' video.id %}" class="btn btn-edit">Editar</a>
-                    <button type="button" class="btn btn-delete" data-video-id="{{ video.id }}"
-                        data-video-title="{{ video.title }}">Eliminar</button>
+        <!-- LISTA DE VIDEOS -->
+        <section class="videos-section">
+            <h2>Videos Subidos</h2>
+            <div class="video-grid">
+                {% for video in videos %}
+                <div class="video-card">
+
+
+                    <!-- Info -->
+                    <div class="video-info">
+                        <h3>{{ video.title }}</h3>
+                        <p class="date">{{ video.uploaded_at|date:"d M Y H:i" }}</p>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="video-actions">
+                        <a href="{% url 'edit_video' video.id %}" class="btn btn-edit">✏️ Editar</a>
+                        <button type="button" class="btn btn-delete" data-video-id="{{ video.id }}"
+                            data-video-title="{{ video.title }}">🗑️ Eliminar</button>
+                    </div>
                 </div>
-            </li>
-            {% empty %}
-            <li>No hay videos</li>
-            {% endfor %}
-        </ul>
+                {% empty %}
+                <p>No hay videos</p>
+                {% endfor %}
+            </div>
+        </section>
     </main>
 
     <!-- Modal de confirmación -->
@@ -47,9 +60,9 @@
             <div class="modal-actions">
                 <form id="deleteForm" method="post" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-delete">Sí, eliminar</button>
+                    <button type="submit" class="btn btn-delete">✅ Sí, eliminar</button>
                 </form>
-                <button type="button" class="btn btn-cancel" id="cancelDelete">Cancelar</button>
+                <button type="button" class="btn btn-cancel" id="cancelDelete">❌ Cancelar</button>
             </div>
         </div>
     </div>
@@ -61,25 +74,20 @@
             const cancelBtn = document.getElementById("cancelDelete");
             const deleteForm = document.getElementById("deleteForm");
 
-            // Asignar evento a todos los botones de eliminar
+            // Evento en botones de eliminar
             const deleteButtons = document.querySelectorAll(".btn-delete[data-video-id]");
             deleteButtons.forEach(btn => {
                 btn.addEventListener("click", function () {
                     const videoId = this.dataset.videoId;
                     const videoTitle = this.dataset.videoTitle;
 
-                    // Mostrar texto en modal
-                    modalText.textContent = `¿Realmente deseas eliminar el video "${videoTitle}"? Esta acción no se puede deshacer.`;
-
-                    // Cambiar action del formulario al video correspondiente
+                    modalText.textContent = `¿Seguro que quieres eliminar el video "${videoTitle}"?`;
                     deleteForm.action = `/delete/${videoId}/`;
-
-                    // Mostrar modal
                     modal.style.display = "flex";
                 });
             });
 
-            // Cancelar eliminación
+            // Cancelar
             cancelBtn.addEventListener("click", function () {
                 modal.style.display = "none";
             });
