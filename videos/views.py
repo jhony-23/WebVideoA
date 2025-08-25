@@ -1,41 +1,41 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Video
-from .forms import VideoForm
-
+from .models import Media
+from .forms import MediaForm
 
 def home(request):
-    videos_qs = Video.objects.all().order_by('uploaded_at')
-    videos = [{"title": v.title, "videofile": v.videofile.url} for v in videos_qs]
-    return render(request, 'videos/home.html', {'videos': videos})
+    media_qs = Media.objects.all().order_by('uploaded_at')
+    media_items = [{"title": m.title, "file": m.file.url, "media_type": m.media_type} for m in media_qs]
+    return render(request, 'videos/home.html', {'media_items': media_items})
 
-
-def upload_video(request):
+def upload_media(request):
     if request.method == 'POST':
-        form = VideoForm(request.POST, request.FILES)
+        form = MediaForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             return redirect('upload')
     else:
-        form = VideoForm()
-    videos = Video.objects.all().order_by('-uploaded_at')
-    return render(request, 'videos/upload.html', {'form': form, 'videos': videos})
+        form = MediaForm()
 
+    media_items = Media.objects.all().order_by('-uploaded_at')
+    return render(request, 'videos/upload.html', {
+        'form': form,
+        'media_items': media_items,
+    })
 
-def edit_video(request, video_id):
-    video = get_object_or_404(Video, id=video_id)
+def edit_media(request, media_id):
+    media = get_object_or_404(Media, id=media_id)
     if request.method == 'POST':
-        form = VideoForm(request.POST, request.FILES, instance=video)
+        form = MediaForm(request.POST, request.FILES, instance=media)
         if form.is_valid():
             form.save()
             return redirect('upload')
     else:
-        form = VideoForm(instance=video)
-    return render(request, 'videos/edit_video.html', {'form': form, 'video': video})
+        form = MediaForm(instance=media)
+    return render(request, 'videos/edit_video.html', {'form': form, 'media': media})
 
-
-def delete_video(request, video_id):
-    video = get_object_or_404(Video, id=video_id)
+def delete_media(request, media_id):
+    media = get_object_or_404(Media, id=media_id)
     if request.method == 'POST':
-        video.delete()
+        media.delete()
         return redirect('upload')
-    return render(request, 'videos/delete_confirm.html', {'video': video})
+    return render(request, 'videos/delete_confirm.html', {'media': media})

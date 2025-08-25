@@ -4,45 +4,58 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Reproductor de Videos - Carrusel</title>
+    <title>Reproductor de Medios - Carrusel</title>
     <link rel="stylesheet" href="{% static 'videos/css/home.css' %}">
 </head>
 
 <body>
-    <div class="video-title" id="video-title"></div>
-    <video id="video-player" autoplay muted playsinline></video>
+    <div class="media-title" id="media-title"></div>
+    <div id="media-container">
+        <video id="video-player" autoplay muted playsinline style="display:none;"></video>
+        <img id="image-player" style="display:none;">
+    </div>
 
-
-    {{ videos|json_script:"videos-data" }}
+    {{ media_items|json_script:"media-data" }}
 
     <script>
-        const videos = JSON.parse(document.getElementById('videos-data').textContent);
+        const mediaList = JSON.parse(document.getElementById('media-data').textContent);
 
-        const player = document.getElementById('video-player');
-        const titleDiv = document.getElementById('video-title');
+        const videoPlayer = document.getElementById('video-player');
+        const imagePlayer = document.getElementById('image-player');
+        const titleDiv = document.getElementById('media-title');
+
         let currentIndex = 0;
 
-        function playVideo(index) {
-            if (!videos.length) return;
+        function playMedia(index) {
+            if (!mediaList.length) return;
 
-            player.src = videos[index].videofile;
-            titleDiv.textContent = videos[index].title;
+            const media = mediaList[index];
+            titleDiv.textContent = media.title;
 
-            const playPromise = player.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log("No se pudo reproducir automáticamente:", error);
-                });
+            if (media.media_type === 'video') {
+                imagePlayer.style.display = 'none';
+                videoPlayer.src = media.file;
+                videoPlayer.style.display = 'block';
+                videoPlayer.play();
+            } else if (media.media_type === 'image') {
+                videoPlayer.pause();
+                videoPlayer.style.display = 'none';
+                imagePlayer.src = media.file;
+                imagePlayer.style.display = 'block';
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % mediaList.length;
+                    playMedia(currentIndex);
+                }, 5000);
             }
         }
 
-        player.addEventListener('ended', () => {
-            currentIndex = (currentIndex + 1) % videos.length;
-            playVideo(currentIndex);
+        videoPlayer.addEventListener('ended', () => {
+            currentIndex = (currentIndex + 1) % mediaList.length;
+            playMedia(currentIndex);
         });
 
-        // Inicia el primer video
-        playVideo(currentIndex);
+        // Inicia el primer media
+        playMedia(currentIndex);
     </script>
 </body>
 

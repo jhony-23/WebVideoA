@@ -1,5 +1,5 @@
 from django import forms
-from .models import Video
+from .models import Media
 
 class CustomClearableFileInput(forms.ClearableFileInput):
     template_with_initial = (
@@ -8,15 +8,20 @@ class CustomClearableFileInput(forms.ClearableFileInput):
     )
     initial_text = 'Actualmente'
     input_text = 'Reemplazar'
+    # Permitimos solo ciertos tipos de archivo (videos e imágenes)
+    def __init__(self, attrs=None):
+        super().__init__(attrs)
+        self.attrs.update({'accept': 'video/*,image/*'})
 
-class VideoForm(forms.ModelForm):
+class MediaForm(forms.ModelForm):
     class Meta:
-        model = Video
-        fields = ('title', 'videofile')
+        model = Media
+        fields = ('title', 'file', 'media_type')
         labels = {
             'title': 'Título',
-            'videofile': 'Cargar video',
+            'file': 'Cargar archivo',
+            'media_type': 'Tipo de archivo',
         }
         widgets = {
-            'videofile': CustomClearableFileInput,
+            'file': CustomClearableFileInput(),
         }

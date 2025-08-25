@@ -1,10 +1,6 @@
 from django.contrib import admin
+from .models import Media  # Antes estaba 'Video'
 
-# Register your models here.
-
-from django.contrib import admin
-from .models import Video
-
-@admin.register(Video)
-class VideoAdmin(admin.ModelAdmin):
-    list_display = ('title', 'uploaded_at')
+@admin.register(Media)
+class MediaAdmin(admin.ModelAdmin):
+    list_display = ('title', 'media_type', 'uploaded_at')

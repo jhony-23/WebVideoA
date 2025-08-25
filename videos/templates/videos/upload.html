@@ -1,3 +1,4 @@
+{% load widget_tweaks %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
@@ -16,37 +17,57 @@
     <main>
         <!-- FORMULARIO -->
         <section class="form-section">
-            <h2>Subir Video</h2>
+            <h2>Subir Contenido</h2>
             <form method="post" enctype="multipart/form-data" class="upload-form">
                 {% csrf_token %}
-                {{ form.as_p }}
+
+                <!-- Campo para el título -->
+                <div>
+                    {{ form.title.label_tag }}
+                    {{ form.title }}
+                </div>
+
+                <!-- Campo tipo de media -->
+                <div>
+                    {{ form.media_type.label_tag }}
+                    {{ form.media_type }}
+                </div>
+
+                <!-- Campo de archivo personalizado -->
+                <label class="upload-label" for="id_file">
+                    <img src="{% static 'videos/img/upload_icon.png' %}" alt="Upload Icon"> Seleccionar archivo
+                </label>
+                {{ form.file|add_class:"custom-file-input" }}
+
+                <!-- Previsualización -->
+                <div id="preview-container" style="margin-top:10px;">
+                    <video id="video-preview" style="display:none;" controls width="300"></video>
+                    <img id="image-preview" style="display:none;" width="300">
+                </div>
+
                 <button type="submit" class="btn btn-primary">📤 Subir</button>
             </form>
         </section>
 
-        <!-- LISTA DE VIDEOS -->
+        <!-- LISTA DE VIDEOS/IMÁGENES -->
         <section class="videos-section">
-            <h2>Videos Subidos</h2>
+            <h2>Contenido Subido</h2>
             <div class="video-grid">
-                {% for video in videos %}
+                {% for media in media_items %}
                 <div class="video-card">
-
-
-                    <!-- Info -->
                     <div class="video-info">
-                        <h3>{{ video.title }}</h3>
-                        <p class="date">{{ video.uploaded_at|date:"d M Y H:i" }}</p>
+                        <h3>{{ media.title }}</h3>
+                        <p class="date">{{ media.uploaded_at|date:"d M Y H:i" }}</p>
                     </div>
 
-                    <!-- Acciones -->
                     <div class="video-actions">
-                        <a href="{% url 'edit_video' video.id %}" class="btn btn-edit">✏️ Editar</a>
-                        <button type="button" class="btn btn-delete" data-video-id="{{ video.id }}"
-                            data-video-title="{{ video.title }}">🗑️ Eliminar</button>
+                        <a href="{% url 'edit_video' media.id %}" class="btn btn-edit">✏️ Editar</a>
+                        <button type="button" class="btn btn-delete" data-video-id="{{ media.id }}"
+                            data-video-title="{{ media.title }}">🗑️ Eliminar</button>
                     </div>
                 </div>
                 {% empty %}
-                <p>No hay videos</p>
+                <p>No hay archivos multimedia subidos</p>
                 {% endfor %}
             </div>
         </section>
@@ -67,34 +88,54 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script>
+        // Previsualización antes de subir
+        const fileInput = document.getElementById("id_file");
+        const videoPreview = document.getElementById("video-preview");
+        const imagePreview = document.getElementById("image-preview");
+
+        fileInput.addEventListener("change", () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const fileURL = URL.createObjectURL(file);
+            if (file.type.startsWith("video/")) {
+                imagePreview.style.display = "none";
+                videoPreview.src = fileURL;
+                videoPreview.style.display = "block";
+            } else if (file.type.startsWith("image/")) {
+                videoPreview.style.display = "none";
+                imagePreview.src = fileURL;
+                imagePreview.style.display = "block";
+            }
+        });
+
+        // Modal de eliminación
         document.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById("confirmModal");
             const modalText = document.getElementById("modal-text");
             const cancelBtn = document.getElementById("cancelDelete");
             const deleteForm = document.getElementById("deleteForm");
 
-            // Evento en botones de eliminar
             const deleteButtons = document.querySelectorAll(".btn-delete[data-video-id]");
             deleteButtons.forEach(btn => {
                 btn.addEventListener("click", function () {
-                    const videoId = this.dataset.videoId;
-                    const videoTitle = this.dataset.videoTitle;
+                    const mediaId = this.dataset.videoId;
+                    const mediaTitle = this.dataset.videoTitle;
 
-                    modalText.textContent = `¿Seguro que quieres eliminar el video "${videoTitle}"?`;
-                    deleteForm.action = `/delete/${videoId}/`;
+                    modalText.textContent = `¿Seguro que quieres eliminar "${mediaTitle}"?`;
+                    deleteForm.action = `/delete/${mediaId}/`;
                     modal.style.display = "flex";
                 });
             });
 
-            // Cancelar
             cancelBtn.addEventListener("click", function () {
                 modal.style.display = "none";
             });
         });
     </script>
 
-    <!-- FOOTER -->
     <footer>
         <p>© 2025 Sitio Web ADICLA Mercadotecnia y Publicidad. Todos los derechos reservados.</p>
     </footer>

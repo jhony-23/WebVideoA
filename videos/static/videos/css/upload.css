@@ -251,3 +251,28 @@ footer {
     margin-top: 40px;
     letter-spacing: 0.5px;
 }
+
+
+/* Estilo para el input tipo archivo personalizado */
+.custom-file-input {
+    display: none;
+    /* Oculta el input original */
+}
+
+.upload-label {
+    display: inline-block;
+    cursor: pointer;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    font-size: 1em;
+    text-align: center;
+}
+
+.upload-label img {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
