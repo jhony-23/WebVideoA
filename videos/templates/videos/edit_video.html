@@ -1,31 +1,134 @@
 {% load static %}
+{% load widget_tweaks %}
+
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Panel Editar Video</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Contenido - AdiclaVideo</title>
     <link rel="stylesheet" href="{% static 'videos/css/edit_video.css' %}">
 </head>
 
 <body>
-    <header>Editar Video</header>
-    <main>
-        <h1>Editar "{{ video.title }}"</h1>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.title.errors }}
-            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
-            {{ form.title }}
+    <div class="container">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="success-message">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
 
-            {{ form.videofile.errors }}
-            {{ form.videofile }} <!-- Aquí NO pones la etiqueta, solo el widget -->
+        <header>
+            <h1>Editar Contenido</h1>
+        </header>
 
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-        </form>
-        </form>
-        <a href="{% url 'upload' %}" class="btn-link">Volver</a>
-    </main>
+        <main>
+            <div class="card">
+                <h2>Editando: "{{ media.title }}"</h2>
+
+                <!-- Vista previa del archivo actual -->
+                <div class="preview-section">
+                    <h3>Archivo actual</h3>
+                    <div class="media-preview">
+                        {% if media.media_type == 'video' %}
+                        <video controls src="{{ media.file.url }}"></video>
+                        {% elif media.media_type == 'image' %}
+                        <img src="{{ media.file.url }}" alt="{{ media.title }}">
+                        {% endif %}
+                    </div>
+                    <p class="filename">{{ media.file.name|slice:"6:" }}</p>
+                </div>
+
+                <!-- Formulario de edición -->
+                <form method="post" enctype="multipart/form-data" class="edit-form" id="editForm">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="{{ form.title.id_for_label }}">Título</label>
+                        {{ form.title|add_class:"form-input" }}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.media_type.id_for_label }}">Tipo de archivo</label>
+                        {{ form.media_type|add_class:"form-select" }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="file-upload-label">
+                            <span>Seleccionar nuevo archivo</span>
+                            <input type="file" id="fileInput" name="{{ form.file.name }}" class="file-input"
+                                accept="video/*,image/*">
+                        </label>
+                        <p class="file-info" id="fileInfo">No se ha seleccionado ningún archivo</p>
+                    </div>
+
+                    <!-- Vista previa del nuevo archivo -->
+                    <div id="preview-container" class="preview-container">
+                        <div class="preview-placeholder" id="previewPlaceholder">
+                            <p>Vista previa del nuevo archivo aparecerá aquí</p>
+                        </div>
+                        <video id="video-preview" controls style="display:none;"></video>
+                        <img id="image-preview" alt="Vista previa" style="display:none;">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                        <a href="{% url 'upload' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const fileInput = document.getElementById("fileInput");
+            const videoPreview = document.getElementById("video-preview");
+            const imagePreview = document.getElementById("image-preview");
+            const previewPlaceholder = document.getElementById("previewPlaceholder");
+            const fileInfo = document.getElementById("fileInfo");
+
+            fileInput.addEventListener("change", function () {
+                const file = this.files[0];
+                if (!file) {
+                    previewPlaceholder.style.display = "block";
+                    videoPreview.style.display = "none";
+                    imagePreview.style.display = "none";
+                    fileInfo.textContent = "No se ha seleccionado ningún archivo";
+                    return;
+                }
+
+                const fileURL = URL.createObjectURL(file);
+                previewPlaceholder.style.display = "none";
+
+                fileInfo.textContent = `Archivo seleccionado: ${file.name} (${formatFileSize(file.size)})`;
+
+                if (file.type.startsWith("video/")) {
+                    imagePreview.style.display = "none";
+                    videoPreview.src = fileURL;
+                    videoPreview.style.display = "block";
+                } else if (file.type.startsWith("image/")) {
+                    videoPreview.style.display = "none";
+                    imagePreview.src = fileURL;
+                    imagePreview.style.display = "block";
+                } else {
+                    previewPlaceholder.style.display = "block";
+                    videoPreview.style.display = "none";
+                    imagePreview.style.display = "none";
+                    fileInfo.textContent = "Tipo de archivo no compatible";
+                }
+            });
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
 </body>
 
 </html>

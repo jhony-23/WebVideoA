@@ -5,22 +5,22 @@ from .models import Media
 
 # Cuando se elimina un registro, borrar también el archivo físico
 @receiver(post_delete, sender=Media)
-def delete_video_file(sender, instance, **kwargs):
-    if instance.videofile and os.path.isfile(instance.videofile.path):
-        os.remove(instance.videofile.path)
+def delete_media_file(sender, instance, **kwargs):
+    if instance.file and os.path.isfile(instance.file.path):
+        os.remove(instance.file.path)
 
-# Cuando se actualiza un video, borrar el archivo anterior
+# Cuando se actualiza un archivo, borrar el anterior
 @receiver(pre_save, sender=Media)
-def replace_video_file(sender, instance, **kwargs):
+def replace_media_file(sender, instance, **kwargs):
     if not instance.pk:
-        return  # si es un video nuevo, no hace nada
+        return  # si es un nuevo archivo, no hacemos nada
 
     try:
-        old_file = Media.objects.get(pk=instance.pk).videofile
+        old_file = Media.objects.get(pk=instance.pk).file
     except Media.DoesNotExist:
         return
 
-    new_file = instance.videofile
+    new_file = instance.file
     if old_file and old_file != new_file:
         if os.path.isfile(old_file.path):
             os.remove(old_file.path)

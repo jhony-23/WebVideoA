@@ -60,8 +60,20 @@
                         <p class="date">{{ media.uploaded_at|date:"d M Y H:i" }}</p>
                     </div>
 
+                    <!-- Miniatura / Reproductor -->
+                    <div class="video-preview">
+                        {% if media.media_type == "video" %}
+                        <video width="300" controls>
+                            <source src="{{ media.file.url }}" type="video/mp4">
+                            Tu navegador no soporta videos.
+                        </video>
+                        {% elif media.media_type == "image" %}
+                        <img src="{{ media.file.url }}" alt="{{ media.title }}" width="300">
+                        {% endif %}
+                    </div>
+
                     <div class="video-actions">
-                        <a href="{% url 'edit_video' media.id %}" class="btn btn-edit">✏️ Editar</a>
+                        <a href="{% url 'edit_video' media_id=media.id %}" class="btn btn-edit">✏️ Editar</a>
                         <button type="button" class="btn btn-delete" data-video-id="{{ media.id }}"
                             data-video-title="{{ media.title }}">🗑️ Eliminar</button>
                     </div>
@@ -69,6 +81,7 @@
                 {% empty %}
                 <p>No hay archivos multimedia subidos</p>
                 {% endfor %}
+
             </div>
         </section>
     </main>
