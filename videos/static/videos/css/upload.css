@@ -105,7 +105,7 @@ input[type="text"]:focus {
 
 /* Botones generales */
 .btn {
-    padding: 12px 20px;
+    padding: 16px 24px;
     border-radius: 8px;
     font-size: 1em;
     font-weight: bold;
@@ -118,7 +118,20 @@ input[type="text"]:focus {
 }
 
 .btn-primary {
+    padding: 16px 24px;
+    /* altura y ancho consistentes */
+    font-size: 1em;
+    border-radius: 10px;
+    /* redondeo igual que tarjetas */
     background-color: #056CF2;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+    display: inline-block;
 }
 
 .btn-primary:hover {
@@ -156,12 +169,17 @@ ul {
     list-style: none;
     padding: 0;
     margin-top: 25px;
+
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* Dos columnas de igual tamaño */
+    gap: 20px;
+    /* Espacio entre los elementos */
 }
 
 li {
-    padding: 15px 20px;
+    padding: 20px 20px;
     border-radius: 8px;
-    margin-bottom: 12px;
     background-color: #f8f9fa;
     border: 1px solid #e9ecef;
     display: flex;
@@ -261,13 +279,18 @@ footer {
 
 .upload-label {
     display: inline-block;
-    cursor: pointer;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border-radius: 5px;
+    padding: 16px 24px;
+    /* misma altura que btn-primary */
     font-size: 1em;
+    border-radius: 10px;
+    /* mismo redondeo que btn-primary */
+    background-color: #056CF2;
+    /* mismo color base que btn-primary */
+    color: white;
+    font-weight: bold;
     text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .upload-label img {
@@ -275,4 +298,119 @@ footer {
     height: 24px;
     vertical-align: middle;
     margin-right: 8px;
+}
+
+@media (max-width: 700px) {
+    ul {
+        grid-template-columns: 1fr;
+        /* solo 1 columna en pantallas pequeñas */
+    }
+}
+
+/* GRID DE 3 COLUMNAS */
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 3 columnas */
+    gap: 20px;
+    /* espacio entre tarjetas */
+    margin-top: 20px;
+}
+
+/* TARJETA */
+.video-card {
+    display: flex;
+    flex-direction: column;
+    /* apilar elementos */
+    justify-content: space-between;
+    /* empuja acciones al fondo */
+    height: 100%;
+    /* todas con misma altura */
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* INFO */
+.video-info {
+    margin-bottom: 10px;
+}
+
+.video-preview {
+    flex-grow: 1;
+    /* ocupa espacio variable */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* BOTONES SIEMPRE AL FINAL */
+.video-actions {
+    margin-top: auto;
+    /* empuja hacia el fondo */
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    font-size: 14px;
+    border: none;
+}
+
+.btn-edit {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+
+/* Responsive: en pantallas chicas, 1 sola columna */
+@media (max-width: 768px) {
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Estilos para el select de tipo de media */
+select#id_media_type {
+    width: 30%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #056CF2;
+    font-size: 1em;
+    color: #333333;
+    background-color: #ffffff;
+    appearance: none;
+    /* elimina estilo por defecto del navegador */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+select#id_media_type:focus {
+    outline: none;
+    border-color: #0583F2;
+    box-shadow: 0 0 0 2px rgba(5, 131, 242, 0.2);
+}
+
+/* Opcional: flecha personalizada */
+select#id_media_type::-ms-expand {
+    display: none;
 }
