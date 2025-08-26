@@ -9,22 +9,39 @@
 </head>
 
 <body>
+    <!-- Botón Play centrado -->
+    <div id="start-screen">
+        <button id="play-button">PLAY</button>
+    </div>
+
     <div class="media-title" id="media-title"></div>
     <div id="media-container">
         <video id="video-player" autoplay muted playsinline style="display:none;"></video>
-        <img id="image-player" style="display:none;">
+        <img id="image-player" style="display:none;" alt="Media">
     </div>
 
     {{ media_items|json_script:"media-data" }}
 
     <script>
         const mediaList = JSON.parse(document.getElementById('media-data').textContent);
-
         const videoPlayer = document.getElementById('video-player');
         const imagePlayer = document.getElementById('image-player');
         const titleDiv = document.getElementById('media-title');
+        const startScreen = document.getElementById('start-screen');
+        const playButton = document.getElementById('play-button');
 
         let currentIndex = 0;
+
+        // Función para reproducir fullscreen
+        function requestFullScreen(element) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
 
         function playMedia(index) {
             if (!mediaList.length) return;
@@ -40,8 +57,10 @@
             } else if (media.media_type === 'image') {
                 videoPlayer.pause();
                 videoPlayer.style.display = 'none';
-                imagePlayer.src = media.file;
+                imagePlayer.src = media.file; // cualquier imagen que se suba
                 imagePlayer.style.display = 'block';
+
+                // Avanza al siguiente media después de 5 segundos
                 setTimeout(() => {
                     currentIndex = (currentIndex + 1) % mediaList.length;
                     playMedia(currentIndex);
@@ -54,8 +73,12 @@
             playMedia(currentIndex);
         });
 
-        // Inicia el primer media
-        playMedia(currentIndex);
+        // Al presionar PLAY
+        playButton.addEventListener('click', () => {
+            startScreen.style.display = 'none'; // Oculta pantalla de inicio
+            playMedia(currentIndex);
+            requestFullScreen(document.documentElement); // fullscreen nativo
+        });
     </script>
 </body>
 
