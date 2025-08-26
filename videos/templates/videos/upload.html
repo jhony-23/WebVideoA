@@ -35,17 +35,22 @@
 
                 <!-- Campo de archivo personalizado -->
                 <label class="upload-label" for="id_file">
-                    <img src="{% static 'videos/img/upload_icon.png' %}" alt="Upload Icon"> Seleccionar archivo
+                    Seleccionar archivo
                 </label>
-                {{ form.file|add_class:"custom-file-input" }}
+                <input type="file" id="id_file" name="{{ form.file.name }}" class="custom-file-input">
+
+
+
 
                 <!-- Previsualización -->
                 <div id="preview-container" style="margin-top:10px;">
                     <video id="video-preview" style="display:none;" controls width="300"></video>
                     <img id="image-preview" style="display:none;" width="300">
                 </div>
-
-                <button type="submit" class="btn btn-primary">📤 Subir</button>
+                <div style="text-align: center;">
+                    <button type="submit" class="btn btn-upload" style="padding: 16px 32px; font-size: 1.2em;">📤
+                        Subir Contenido</button>
+                </div>
             </form>
         </section>
 

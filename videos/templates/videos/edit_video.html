@@ -9,7 +9,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Contenido - AdiclaVideo</title>
     <link rel="stylesheet" href="{% static 'videos/css/edit_video.css' %}">
+
 </head>
+<header>
+    <h1>Editar Contenido</h1>
+</header>
 
 <body>
     <div class="container">
@@ -18,10 +22,6 @@
         <div class="success-message">{{ message }}</div>
         {% endfor %}
         {% endif %}
-
-        <header>
-            <h1>Editar Contenido</h1>
-        </header>
 
         <main>
             <div class="card">
@@ -80,6 +80,10 @@
             </div>
         </main>
     </div>
+
+    <footer>
+        <p>© 2025 Sitio Web ADICLA Mercadotecnia y Publicidad. Todos los derechos reservados.</p>
+    </footer>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

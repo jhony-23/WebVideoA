@@ -271,27 +271,33 @@ footer {
 }
 
 
-/* Estilo para el input tipo archivo personalizado */
+/* Input tipo archivo personalizado oculto */
 .custom-file-input {
     display: none;
-    /* Oculta el input original */
 }
 
+/* Estilo para label de upload (solo texto, bordes punteados) */
 .upload-label {
     display: inline-block;
-    padding: 16px 24px;
-    /* misma altura que btn-primary */
-    font-size: 1em;
-    border-radius: 10px;
-    /* mismo redondeo que btn-primary */
-    background-color: #056CF2;
-    /* mismo color base que btn-primary */
-    color: white;
-    font-weight: bold;
-    text-align: center;
+    padding: 12px 24px;
+    background-color: #f5f7fa;
+    /* color de fondo */
+    border: 2px dashed #056CF2;
+    /* borde punteado */
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: all 0.3s;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #0424D9;
+    /* texto azul */
 }
+
+.upload-label:hover {
+    background-color: rgba(5, 108, 242, 0.05);
+}
+
 
 .upload-label img {
     width: 24px;
@@ -413,4 +419,35 @@ select#id_media_type:focus {
 /* Opcional: flecha personalizada */
 select#id_media_type::-ms-expand {
     display: none;
+}
+
+/* Botón upload personalizado */
+.btn-upload {
+    width: 50%;
+    /* ancho completo del contenedor */
+    max-width: 300px;
+    /* opcional, límite máximo */
+
+    padding: 16px 32px;
+    /* Ajusta alto y ancho */
+    font-size: 1.2em;
+    /* Tamaño del texto */
+    font-weight: bold;
+    border-radius: 12px;
+    /* Bordes redondeados */
+    background-color: #056CF2;
+    /* Color de fondo */
+    color: white;
+    /* Texto blanco */
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: inline-block;
+}
+
+/* Hover */
+.btn-upload:hover {
+    background-color: #0439D9;
+    transform: translateY(-2px);
 }

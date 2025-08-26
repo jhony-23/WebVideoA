@@ -24,19 +24,38 @@ body {
     line-height: 1.6;
 }
 
+/* Contenedor central */
 .container {
     max-width: 1000px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
-/* Header */
+/* --- Header full width y con gradiente --- */
 header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
-    padding: 2rem 0;
+    background: linear-gradient(135deg, #0424D9, #056CF2);
+    padding: 45px 0;
     text-align: center;
-    margin-bottom: 2rem;
+    font-size: 2em;
+    font-weight: 700;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+header::before,
+header::after {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+    top: -50px;
+}
+
+header::after {
+    right: -50px;
 }
 
 header h1 {
@@ -122,6 +141,32 @@ header h1 {
 .form-input:focus {
     outline: none;
     border-color: var(--primary-light);
+}
+
+/* Select tipo de media */
+.form-select {
+    width: 30%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--primary-light);
+    font-size: 1rem;
+    color: var(--dark);
+    background-color: #fff;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 2px rgba(5, 131, 242, 0.2);
+}
+
+.form-select::-ms-expand {
+    display: none;
 }
 
 /* Upload de archivos */
@@ -235,6 +280,21 @@ header h1 {
     margin-bottom: 1.5rem;
     text-align: center;
     display: none;
+}
+
+/* Footer full width */
+footer {
+    background: linear-gradient(135deg, #0424D9, #056CF2);
+    color: white;
+    text-align: center;
+    padding: 40px 0;
+    font-size: 1em;
+    font-weight: 500;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    box-shadow: 0 -2px 12px rgba(4, 36, 217, 0.08);
+    margin-top: 40px;
+    letter-spacing: 0.5px;
 }
 
 /* Responsive */
