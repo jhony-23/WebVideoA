@@ -51,6 +51,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'AdiclaVideo.wsgi.application'
 
+
+"""
 # Database
 DATABASES = {
     'default': {
@@ -58,6 +60,20 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'PlataformaVideosA',
+        'HOST': 'JHONY\\SQLEXPRESS',  # Nombre exacto de tu instancia
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'trusted_connection': 'yes',  # Usa la autenticación de Windows
+        },
+    }
+}
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
