@@ -65,8 +65,8 @@ DATABASES = {
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': os.getenv('PlataformaVideosA'),
-        'HOST': os.getenv('JHONY\\SQLEXPRESS'), # Nombre exacto de tu instancia
+        'NAME': 'PlataformaVideosA',
+        'HOST': 'JHONY\\SQLEXPRESS', # Nombre exacto de tu instancia
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'trusted_connection': 'yes',  # Usa la autenticación de Windows
