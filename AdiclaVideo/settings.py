@@ -62,14 +62,31 @@ DATABASES = {
 }
 
 """
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PlataformaVideosA',
-        'HOST': 'JHONY\\SQLEXPRESS', # Nombre exacto de tu instancia
+        'HOST': '192.168.0.149\\SQLEXPRESS',  # tu IP real + instancia
+        'USER': 'vm_user',
+        'PASSWORD': 'Adicla221231',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
-            'trusted_connection': 'yes',  # Usa la autenticación de Windows
+        },
+    }
+}
+
+"""
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'PlataformaVideosA',
+        'HOST': 'JHONY\\SQLEXPRESS',
+        'USER': 'vm_user',
+        'PASSWORD': 'Adicla221231',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
         },
     }
 }
