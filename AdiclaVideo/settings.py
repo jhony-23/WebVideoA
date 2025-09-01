@@ -82,7 +82,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PlataformaVideosA',
-        'HOST': 'JHONY\\SQLEXPRESS',
+        'HOST': '192.168.0.149,1433',  # tu IP real + puerto
         'USER': 'vm_user',
         'PASSWORD': 'Adicla221231',
         'OPTIONS': {
@@ -91,7 +91,7 @@ DATABASES = {
     }
 }
 
-
+#'JHONY\\SQLEXPRESS',
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
