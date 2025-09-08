@@ -1,3 +1,4 @@
+"""
 import os
 from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
@@ -24,3 +25,5 @@ def replace_media_file(sender, instance, **kwargs):
     if old_file and old_file != new_file:
         if os.path.isfile(old_file.path):
             os.remove(old_file.path)
+            
+"""

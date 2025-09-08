@@ -11,7 +11,7 @@ class Media(models.Model):
     )
 
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to='media/')  # Carpeta única para videos e imágenes
+    file = models.FileField(upload_to='')  # Carpeta única para videos e imágenes
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
