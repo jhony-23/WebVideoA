@@ -6,12 +6,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-0)h94amrf7vl3v70v#^e9o__hpkowcp0z%fn@v(3g09dtez^eh'
-DEBUG = False
+DEBUG = True
 
+"""
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '172.32.32.30', '192.99.121.227']
   # Por ahora para desarrollo
-  
 
+"""
+ALLOWED_HOSTS = ['*']  # Permitir todas las IPs (no recomendado para producción)
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -56,7 +58,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'AdiclaVideo.wsgi.application'
 
 
-"""
 # Database
 DATABASES = {
     'default': {
@@ -65,41 +66,8 @@ DATABASES = {
     }
 }
 
-"""
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'PlataformaVideosA',
-        'HOST': '192.168.0.149\\SQLEXPRESS',  # tu IP real + instancia
-        'USER': 'vm_user',
-        'PASSWORD': 'Adicla221231',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    }
-}
 
 """
-
-"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'PlataformaVideosA',
-        'HOST': '192.168.0.149,1433',  #'JHONY\\SQLEXPRESS',
-        'USER': 'vm_user',
-        'PASSWORD': 'Adicla221231',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    }
-}
-
-"""
-
-
-
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
@@ -112,6 +80,7 @@ DATABASES = {
         },
     }
 }
+"""
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -129,7 +98,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
+
+# Para producción (collectstatic los copia aquí)
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Para desarrollo: indica dónde buscar los archivos estáticos originales
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'videos', 'static'),
+]
 
 # Carpeta donde se guardarán los videos subidos
 MEDIA_URL = '/media/'
