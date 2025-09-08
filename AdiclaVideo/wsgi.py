@@ -7,10 +7,12 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 
 import os
 from django.core.wsgi import get_wsgi_application
-from whitenoise import WhiteNoise  # <-- Esto sirve archivos estáticos (CSS, JS, imágenes)
+from whitenoise import WhiteNoise  # Sirve archivos estáticos (CSS, JS, imágenes)
+from django.conf import settings   # Para acceder a STATIC_ROOT
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AdiclaVideo.settings')
 
 application = get_wsgi_application()
-# Aquí configuramos WhiteNoise para que sirva los archivos estáticos desde STATIC_ROOT
-application = WhiteNoise(application, root=os.path.join(os.path.dirname(__file__), 'staticfiles'), max_age=31536000)
+
+# Configuramos WhiteNoise para que sirva los archivos estáticos desde STATIC_ROOT
+application = WhiteNoise(application, root=settings.STATIC_ROOT, max_age=31536000)
