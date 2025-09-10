@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-0)h94amrf7vl3v70v#^e9o__hpkowcp0z%fn@v(3g09dtez^eh
 DEBUG = False
 
 # Permitir estos hosts (IP del servidor y localhost para pruebas locales)
-ALLOWED_HOSTS = ['192.99.121.227', '172.32.32.30']
+ALLOWED_HOSTS = ['192.99.121.227', '172.32.32.30', '127.0.0.1', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [
