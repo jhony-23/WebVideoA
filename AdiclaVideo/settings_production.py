@@ -33,6 +33,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'videos.middleware.StreamingMediaMiddleware',  # Middleware de streaming
+    'videos.middleware.CacheControlMiddleware',    # Middleware de caché
 ]
 
 ROOT_URLCONF = 'AdiclaVideo.urls'

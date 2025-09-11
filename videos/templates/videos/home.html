@@ -16,7 +16,9 @@
 
     <div class="media-title" id="media-title"></div>
     <div id="media-container">
-        <video id="video-player" autoplay playsinline style="display:none;"></video>
+        <!-- Agregamos un indicador de buffering -->
+        <div id="buffer-indicator" style="display:none;">Cargando...</div>
+        <video id="video-player" autoplay playsinline preload="auto" style="display:none;"></video>
         <img id="image-player" style="display:none;" alt="Media">
     </div>
 
@@ -29,8 +31,28 @@
         const titleDiv = document.getElementById('media-title');
         const startScreen = document.getElementById('start-screen');
         const playButton = document.getElementById('play-button');
+        const bufferIndicator = document.getElementById('buffer-indicator');
 
         let currentIndex = 0;
+        let nextIndex = 1;
+        let preloadedVideos = {};
+
+        // Función para precargar el siguiente video
+        function preloadNextVideo() {
+            if (mediaList.length <= 1) return;
+
+            nextIndex = (currentIndex + 1) % mediaList.length;
+            const nextMedia = mediaList[nextIndex];
+
+            // Solo precargar si es un video
+            if (nextMedia.media_type === 'video' && !preloadedVideos[nextIndex]) {
+                const preloadVideo = new Video();
+                preloadVideo.src = nextMedia.file;
+                preloadVideo.preload = 'auto';
+                preloadVideo.load();
+                preloadedVideos[nextIndex] = preloadVideo;
+            }
+        }
 
         // Función para reproducir fullscreen
         function requestFullScreen(element) {
@@ -43,6 +65,7 @@
             }
         }
 
+        // Función mejorada para reproducir media con mejor manejo de buffering
         function playMedia(index) {
             if (!mediaList.length) return;
 
@@ -51,13 +74,45 @@
 
             if (media.media_type === 'video') {
                 imagePlayer.style.display = 'none';
-                videoPlayer.src = media.file;
+
+                // Mostrar indicador de buffering
+                bufferIndicator.style.display = 'block';
+
+                // Usar video precargado si existe
+                if (preloadedVideos[index]) {
+                    videoPlayer.src = preloadedVideos[index].src;
+                    delete preloadedVideos[index]; // Liberar memoria
+                } else {
+                    videoPlayer.src = media.file;
+                }
+
                 videoPlayer.style.display = 'block';
-                videoPlayer.play();
+
+                // Iniciar la reproducción cuando hay suficiente buffer
+                videoPlayer.oncanplay = function () {
+                    bufferIndicator.style.display = 'none';
+                    videoPlayer.play();
+                    // Precargar el siguiente video mientras se reproduce este
+                    preloadNextVideo();
+                };
+
+                // Manejar eventos de buffering
+                videoPlayer.onwaiting = function () {
+                    bufferIndicator.style.display = 'block';
+                };
+
+                videoPlayer.onplaying = function () {
+                    bufferIndicator.style.display = 'none';
+                };
+
+                // Cargar el video
+                videoPlayer.load();
+
             } else if (media.media_type === 'image') {
                 videoPlayer.pause();
                 videoPlayer.style.display = 'none';
-                imagePlayer.src = media.file; // cualquier imagen que se suba
+                bufferIndicator.style.display = 'none';
+                imagePlayer.src = media.file;
                 imagePlayer.style.display = 'block';
 
                 // Avanza al siguiente media después de 5 segundos
@@ -65,6 +120,9 @@
                     currentIndex = (currentIndex + 1) % mediaList.length;
                     playMedia(currentIndex);
                 }, 5000);
+
+                // Precargar el siguiente si es un video
+                preloadNextVideo();
             }
         }
 
@@ -78,6 +136,24 @@
             startScreen.style.display = 'none'; // Oculta pantalla de inicio
             playMedia(currentIndex);
             requestFullScreen(document.documentElement); // fullscreen nativo
+        });
+
+        // Configurar video para mejor streaming
+        videoPlayer.addEventListener('loadedmetadata', function () {
+            // Si el navegador soporta buffering hints
+            if ('buffered' in videoPlayer) {
+                videoPlayer.autobuffer = true;
+            }
+        });
+
+        // Manejar errores de video
+        videoPlayer.addEventListener('error', function (e) {
+            console.error('Error en reproducción de video:', videoPlayer.error);
+            bufferIndicator.textContent = 'Error al cargar el video. Intentando siguiente...';
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % mediaList.length;
+                playMedia(currentIndex);
+            }, 3000);
         });
     </script>
 </body>
