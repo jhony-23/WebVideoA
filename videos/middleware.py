@@ -3,13 +3,14 @@ import os
 from django.conf import settings
 from django.http import StreamingHttpResponse, HttpResponse
 from django.urls import re_path
-from wsgiref.util import FileWrapper
+from wsgiref.util import FileWrapper as WSGIFileWrapper
 
+# Usar nuestro wrapper personalizado para mejor rendimiento
 class RangeFileWrapper(object):
     """
     Wrapper para servir archivos en chunks con soporte para Range requests.
     """
-    def __init__(self, filelike, blksize=8192, offset=0, length=None):
+    def __init__(self, filelike, blksize=65536, offset=0, length=None):  # Aumentado a 64KB
         self.filelike = filelike
         self.filelike.seek(offset, os.SEEK_SET)
         self.remaining = length
@@ -63,6 +64,13 @@ class StreamingMediaMiddleware:
         
         # Si no es video o no hay Range header, servir normalmente
         if not is_video or 'HTTP_RANGE' not in request.META:
+            # Para videos, añadir cabeceras de streaming aunque no haya Range request
+            if is_video:
+                response = self.get_response(request)
+                response['Accept-Ranges'] = 'bytes'
+                response['X-Accel-Buffering'] = 'yes'  # Habilitar buffering en proxy
+                response['Cache-Control'] = 'public, max-age=604800, immutable'
+                return response
             return self.get_response(request)
             
         # Manejar Range requests para video
@@ -79,13 +87,19 @@ class StreamingMediaMiddleware:
         start = int(range_match.group(1))
         end = int(range_match.group(2)) if range_match.group(2) else size - 1
         
+        # Límite de tamaño de chunk para mejorar el rendimiento
+        # Garantiza que no enviamos chunks demasiado grandes
+        max_chunk_size = 8 * 1024 * 1024  # 8 MB
+        if end - start > max_chunk_size:
+            end = start + max_chunk_size
+        
         if start >= size:
             return HttpResponse(status=416)  # Range Not Satisfiable
             
         length = end - start + 1
         
         response = StreamingHttpResponse(
-            FileWrapper(open(media_path, 'rb'), 8192, offset=start, length=length),
+            RangeFileWrapper(open(media_path, 'rb'), 65536, offset=start, length=length),  # Usar 64KB de buffer
             status=206,  # Partial Content
             content_type=content_type
         )
@@ -93,6 +107,11 @@ class StreamingMediaMiddleware:
         response['Content-Length'] = str(length)
         response['Content-Range'] = f'bytes {start}-{end}/{size}'
         response['Accept-Ranges'] = 'bytes'
+        response['X-Accel-Buffering'] = 'yes'  # Habilitar buffering en proxy
+        
+        # Cabeceras para mejorar la experiencia de streaming
+        response['Cache-Control'] = 'public, max-age=604800, immutable'
+        response['X-Content-Type-Options'] = 'nosniff'
         
         return response
 
@@ -116,8 +135,15 @@ class CacheControlMiddleware:
         
         if is_media:
             # Agregar encabezados de caché para archivos multimedia
-            # Cache por 1 semana = 604800 segundos
-            response['Cache-Control'] = 'public, max-age=604800, immutable'
+            # Cache por 2 semanas = 1209600 segundos (duplicado)
+            response['Cache-Control'] = 'public, max-age=1209600, immutable'
             response['Expires'] = 'Sun, 1 Jan 2030 00:00:00 GMT'
+            response['X-Content-Type-Options'] = 'nosniff'
+            
+            # Si es video, añadir encabezados de rendimiento
+            if any(path.endswith(ext) for ext in ['.mp4', '.webm', '.ogg']):
+                response['Accept-Ranges'] = 'bytes'
+                # Pre-cargar el video desde el inicio, mejora la experiencia
+                response.setdefault('Link', '<{}>; rel=preload; as=video'.format(request.path))
             
         return response
