@@ -18,4 +18,4 @@ application = get_wsgi_application()
 application = WhiteNoise(application, root=settings.STATIC_ROOT, max_age=31536000)
 
 # Servir videos e imágenes subidas (media)
-#application.add_files(settings.MEDIA_ROOT, prefix='/media/')
+application.add_files(settings.MEDIA_ROOT, prefix='/media/')
