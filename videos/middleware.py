@@ -10,7 +10,7 @@ class RangeFileWrapper(object):
     """
     Wrapper para servir archivos en chunks con soporte para Range requests.
     """
-    def __init__(self, filelike, blksize=65536, offset=0, length=None):  # Aumentado a 64KB
+    def __init__(self, filelike, blksize=131072, offset=0, length=None):  # Aumentado a 128KB para videos grandes
         self.filelike = filelike
         self.filelike.seek(offset, os.SEEK_SET)
         self.remaining = length
@@ -89,7 +89,7 @@ class StreamingMediaMiddleware:
         
         # Límite de tamaño de chunk para mejorar el rendimiento
         # Garantiza que no enviamos chunks demasiado grandes
-        max_chunk_size = 8 * 1024 * 1024  # 8 MB
+        max_chunk_size = 20 * 1024 * 1024  # 20 MB - aumentado para videos grandes
         if end - start > max_chunk_size:
             end = start + max_chunk_size
         
@@ -98,11 +98,23 @@ class StreamingMediaMiddleware:
             
         length = end - start + 1
         
-        response = StreamingHttpResponse(
-            RangeFileWrapper(open(media_path, 'rb'), 65536, offset=start, length=length),  # Usar 64KB de buffer
-            status=206,  # Partial Content
-            content_type=content_type
-        )
+        # Abrir archivo con buffer optimizado para videos grandes
+        try:
+            # Abrir con buffer de 1MB
+            file_obj = open(media_path, 'rb', buffering=1048576)
+            response = StreamingHttpResponse(
+                RangeFileWrapper(file_obj, 131072, offset=start, length=length),  # Usar 128KB de buffer
+                status=206,  # Partial Content
+                content_type=content_type
+            )
+        except Exception as e:
+            # En caso de error, intentar con método estándar
+            file_obj = open(media_path, 'rb')
+            response = StreamingHttpResponse(
+                RangeFileWrapper(file_obj, 131072, offset=start, length=length),
+                status=206,
+                content_type=content_type
+            )
         
         response['Content-Length'] = str(length)
         response['Content-Range'] = f'bytes {start}-{end}/{size}'
