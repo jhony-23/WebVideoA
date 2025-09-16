@@ -69,13 +69,39 @@ class StreamingMediaMiddleware:
                 response = self.get_response(request)
                 response['Accept-Ranges'] = 'bytes'
                 response['X-Accel-Buffering'] = 'yes'  # Habilitar buffering en proxy
-                response['Cache-Control'] = 'public, max-age=604800, immutable'
+                
+                # Optimizaciones específicas para dispositivos de baja potencia como Smart TVs
+                user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+                is_tv = 'lg' in user_agent or 'webos' in user_agent or 'smart-tv' in user_agent or 'tv' in user_agent
+                
+                if is_tv:
+                    # Para Smart TVs, ajustar cabeceras para mejor reproducción
+                    response['Cache-Control'] = 'public, max-age=2592000'  # 30 días de caché para TVs
+                    # Sugerir pre-buffering más agresivo
+                    response.setdefault('Link', '<{}>; rel=preload; as=video'.format(request.path))
+                else:
+                    response['Cache-Control'] = 'public, max-age=604800, immutable'
+                
                 return response
             return self.get_response(request)
             
         # Manejar Range requests para video
         size = os.path.getsize(media_path)
         content_type = 'video/mp4' if file_ext == '.mp4' else 'application/octet-stream'
+        
+        # Detectar dispositivos de baja potencia como Smart TVs
+        user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+        is_tv = 'lg' in user_agent or 'webos' in user_agent or 'smart-tv' in user_agent or 'tv' in user_agent
+        
+        # Ajustar tamaño de chunk para dispositivos
+        if is_tv:
+            # Para Smart TVs, usar chunks más pequeños para evitar sobrecarga de memoria
+            chunk_size = 4 * 1024 * 1024  # 4MB para TVs
+            buffer_size = 65536  # 64KB para TVs
+        else:
+            # Para navegadores de escritorio, usar chunks más grandes
+            chunk_size = 20 * 1024 * 1024  # 20MB para escritorio
+            buffer_size = 131072  # 128KB para escritorio
         
         # Parsear el header Range
         range_header = request.META['HTTP_RANGE']
@@ -89,9 +115,8 @@ class StreamingMediaMiddleware:
         
         # Límite de tamaño de chunk para mejorar el rendimiento
         # Garantiza que no enviamos chunks demasiado grandes
-        max_chunk_size = 20 * 1024 * 1024  # 20 MB - aumentado para videos grandes
-        if end - start > max_chunk_size:
-            end = start + max_chunk_size
+        if end - start > chunk_size:
+            end = start + chunk_size
         
         if start >= size:
             return HttpResponse(status=416)  # Range Not Satisfiable
@@ -100,10 +125,11 @@ class StreamingMediaMiddleware:
         
         # Abrir archivo con buffer optimizado para videos grandes
         try:
-            # Abrir con buffer de 1MB
-            file_obj = open(media_path, 'rb', buffering=1048576)
+            # Abrir con buffer optimizado
+            buffer_value = 524288 if is_tv else 1048576  # 512KB para TVs, 1MB para escritorio
+            file_obj = open(media_path, 'rb', buffering=buffer_value)
             response = StreamingHttpResponse(
-                RangeFileWrapper(file_obj, 131072, offset=start, length=length),  # Usar 128KB de buffer
+                RangeFileWrapper(file_obj, buffer_size, offset=start, length=length),
                 status=206,  # Partial Content
                 content_type=content_type
             )
@@ -121,9 +147,17 @@ class StreamingMediaMiddleware:
         response['Accept-Ranges'] = 'bytes'
         response['X-Accel-Buffering'] = 'yes'  # Habilitar buffering en proxy
         
-        # Cabeceras para mejorar la experiencia de streaming
-        response['Cache-Control'] = 'public, max-age=604800, immutable'
-        response['X-Content-Type-Options'] = 'nosniff'
+        # Cabeceras específicas según el dispositivo
+        if is_tv:
+            # Cabeceras optimizadas para Smart TVs
+            response['Cache-Control'] = 'public, max-age=2592000'  # 30 días
+            # Evitar cabeceras complejas que pueden no ser bien soportadas
+            response['X-Content-Type-Options'] = 'nosniff'
+            # No añadir cabeceras Link complejas para TVs
+        else:
+            # Cabeceras estándar para navegadores de escritorio
+            response['Cache-Control'] = 'public, max-age=604800, immutable'
+            response['X-Content-Type-Options'] = 'nosniff'
         
         return response
 
