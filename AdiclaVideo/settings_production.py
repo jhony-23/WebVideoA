@@ -63,7 +63,7 @@ DATABASES = {
         'ENGINE': 'mssql',
         'NAME': 'PlataformaVideosA',
         'HOST': '172.32.32.30',
-        'PORT': '49788',
+        'PORT': '49789',
         'USER': 'vm_user',
         'PASSWORD': 'Adicla221231',
         'OPTIONS': {
