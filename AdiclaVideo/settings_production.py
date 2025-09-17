@@ -62,7 +62,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PlataformaVideosA',
-        'HOST': '172.32.32.30,49788',  #'ADICLA\\SQLEXPRESS',
+        'HOST': '172.32.32.30',
+        'PORT': '49788',
         'USER': 'vm_user',
         'PASSWORD': 'Adicla221231',
         'OPTIONS': {
