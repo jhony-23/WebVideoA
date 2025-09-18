@@ -6,10 +6,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = 'django-insecure-0)h94amrf7vl3v70v#^e9o__hpkowcp0z%fn@v(3g09dtez^eh'
-DEBUG = False
+DEBUG = True
 
 # Permitir estos hosts (IP del servidor y localhost para pruebas locales)
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '172.32.32.30', '192.99.121.227']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.149']
 
 # Application definition
 INSTALLED_APPS = [
@@ -33,6 +33,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'videos.middleware.StreamingMediaMiddleware',  # Nuestro middleware de streaming
 ]
 
 ROOT_URLCONF = 'AdiclaVideo.urls'
@@ -60,7 +61,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'PlataformaVideosA',
-        'HOST': '172.32.32.30,49788',  #'ADICLA\\SQLEXPRESS',
+        'HOST': '192.168.0.149', 
+        'PORT': '1433', 
         'USER': 'vm_user',
         'PASSWORD': 'Adicla221231',
         'OPTIONS': {

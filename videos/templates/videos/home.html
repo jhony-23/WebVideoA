@@ -24,6 +24,9 @@
 
     {{ media_items|json_script:"media-data" }}
 
+    <!-- HLS.js para streaming adaptativo -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
     <script>
         const mediaList = JSON.parse(document.getElementById('media-data').textContent);
         const videoPlayer = document.getElementById('video-player');
@@ -32,6 +35,9 @@
         const startScreen = document.getElementById('start-screen');
         const playButton = document.getElementById('play-button');
         const bufferIndicator = document.getElementById('buffer-indicator');
+
+        // HLS instance
+        let hls = null;
 
         let currentIndex = 0;
         let nextIndex = 1;
@@ -74,52 +80,90 @@
 
             if (media.media_type === 'video') {
                 imagePlayer.style.display = 'none';
-
-                // Mostrar indicador de buffering
                 bufferIndicator.style.display = 'block';
-
-                // Usar video precargado si existe
-                if (preloadedVideos[index]) {
-                    videoPlayer.src = preloadedVideos[index].src;
-                    delete preloadedVideos[index]; // Liberar memoria
-                } else {
-                    videoPlayer.src = media.file;
-                }
-
                 videoPlayer.style.display = 'block';
 
-                // Iniciar la reproducción cuando hay suficiente buffer
-                videoPlayer.oncanplay = function () {
-                    bufferIndicator.style.display = 'none';
-                    videoPlayer.play();
-                    // Precargar el siguiente video mientras se reproduce este
-                    preloadNextVideo();
-                };
+                // Destruir instancia HLS previa si existe
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
 
-                // Manejar eventos de buffering
-                videoPlayer.onwaiting = function () {
-                    bufferIndicator.style.display = 'block';
-                };
+                // Determinar URL (HLS o fallback)
+                const videoUrl = media.stream_url || media.file;
 
-                videoPlayer.onplaying = function () {
-                    bufferIndicator.style.display = 'none';
-                };
+                // Si es HLS y el navegador lo soporta
+                if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
+                    hls = new Hls({
+                        maxBufferLength: 30,          // Buffer máximo 30s
+                        maxMaxBufferLength: 600,      // Límite absoluto 10min
+                        maxBufferSize: 60 * 1000 * 1000,  // 60MB máximo en buffer
+                        maxBufferHole: 0.5,           // Hueco máximo 0.5s
+                        lowLatencyMode: false,        // Modo VOD
+                        backBufferLength: 90,         // 90s de buffer hacia atrás
+                        enableWorker: true,           // Web Worker para mejor performance
+                        stretchShortVideoTrack: true, // Para videos cortos
+                        startLevel: -1,               // Auto quality
+                    });
 
-                // Cargar el video
-                videoPlayer.load();
+                    hls.loadSource(videoUrl);
+                    hls.attachMedia(videoPlayer);
 
+                    // Eventos HLS
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        bufferIndicator.style.display = 'none';
+                        videoPlayer.play();
+                    });
+
+                    hls.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            console.error('Error HLS:', data);
+                            // Fallback a MP4 si falla HLS
+                            videoPlayer.src = media.file;
+                        }
+                    });
+                } else {
+                    // Fallback para navegadores sin soporte HLS
+                    videoPlayer.src = media.file;
+
+                    // Iniciar la reproducción cuando hay suficiente buffer
+                    videoPlayer.oncanplay = function () {
+                        bufferIndicator.style.display = 'none';
+                        videoPlayer.play();
+                        // Precargar el siguiente video mientras se reproduce este
+                        preloadNextVideo();
+                    };
+
+                    // Manejar eventos de buffering
+                    videoPlayer.onwaiting = function () {
+                        bufferIndicator.style.display = 'block';
+                    };
+
+                    videoPlayer.onplaying = function () {
+                        bufferIndicator.style.display = 'none';
+                    };
+
+                    // Cargar el video
+                    videoPlayer.load();
+                }
             } else if (media.media_type === 'image') {
+                // Limpiar HLS si existe
+                if (hls) {
+                    hls.destroy();
+                    hls = null;
+                }
+
                 videoPlayer.pause();
                 videoPlayer.style.display = 'none';
                 bufferIndicator.style.display = 'none';
                 imagePlayer.src = media.file;
                 imagePlayer.style.display = 'block';
 
-                // Avanza al siguiente media después de 5 segundos
+                // Avanza al siguiente media después de 10 segundos (actualizado de 5s)
                 setTimeout(() => {
                     currentIndex = (currentIndex + 1) % mediaList.length;
                     playMedia(currentIndex);
-                }, 5000);
+                }, 10000);
 
                 // Precargar el siguiente si es un video
                 preloadNextVideo();

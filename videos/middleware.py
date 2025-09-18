@@ -37,6 +37,7 @@ class RangeFileWrapper(object):
 class StreamingMediaMiddleware:
     """
     Middleware para servir archivos multimedia con soporte para streaming y Range requests.
+    Soporta HLS (.m3u8, .ts) y video progresivo.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -44,6 +45,18 @@ class StreamingMediaMiddleware:
         media_url = settings.MEDIA_URL.lstrip('/').rstrip('/')
         regex = r'^/{}/(.*?)$'.format(media_url)
         self.media_re = re.compile(regex)
+        
+        # Mapeo de extensiones a content types
+        self.content_types = {
+            '.mp4': 'video/mp4',
+            '.webm': 'video/webm',
+            '.ogg': 'video/ogg',
+            '.mov': 'video/quicktime',
+            '.m3u8': 'application/vnd.apple.mpegurl',
+            '.ts': 'video/mp2t',
+            '.jpg': 'image/jpeg',
+            '.png': 'image/png',
+        }
         
     def __call__(self, request):
         media_match = self.media_re.match(request.path)
@@ -58,10 +71,27 @@ class StreamingMediaMiddleware:
         if not os.path.exists(media_path):
             return self.get_response(request)
             
-        # Detectar si es un archivo de video
+        # Detectar tipo de archivo
         file_ext = os.path.splitext(media_path)[1].lower()
-        is_video = file_ext in ['.mp4', '.webm', '.ogg', '.mov', '.avi']
+        is_video = file_ext in ['.mp4', '.webm', '.ogg', '.mov']
+        is_hls = file_ext in ['.m3u8', '.ts']
         
+        # Content-Type específico para el tipo de archivo
+        content_type = self.content_types.get(file_ext, 'application/octet-stream')
+        
+        # HLS tiene tratamiento especial
+        if is_hls:
+            response = self.get_response(request)
+            if file_ext == '.m3u8':
+                # Manifests: cache corto para permitir actualizaciones
+                response['Cache-Control'] = 'public, max-age=5'
+            else:
+                # Segmentos .ts: cache largo, son inmutables
+                response['Cache-Control'] = 'public, max-age=31536000, immutable'
+            response['Access-Control-Allow-Origin'] = '*'  # Necesario para algunos players
+            response['Content-Type'] = content_type
+            return response
+            
         # Si no es video o no hay Range header, servir normalmente
         if not is_video or 'HTTP_RANGE' not in request.META:
             # Para videos, añadir cabeceras de streaming aunque no haya Range request
