@@ -18,14 +18,28 @@ class Command(BaseCommand):
         for i, video in enumerate(videos, 1):
             self.stdout.write(f'Procesando video {i} de {total}: {video.file.name}')
             try:
-                # Crear instancia del procesador
-                processor = VideoProcessor(video)
-                # Procesar el video
-                processor.process()
-                self.stdout.write(self.style.SUCCESS(
-                    f'✓ Video {video.file.name} procesado exitosamente'
-                ))
+                # Crear instancia del procesador con la ruta del archivo
+                processor = VideoProcessor(video.file.path)
+                # Procesar el video y actualizar el objeto Media
+                result = processor.process()
+                if result:
+                    video.is_stream_ready = True
+                    video.stream_status = 'completed'
+                    video.hls_path = processor.hls_path
+                    video.available_qualities = processor.available_qualities
+                    video.duration = processor.duration
+                    video.save()
+                    self.stdout.write(self.style.SUCCESS(
+                        f'✓ Video {video.file.name} procesado exitosamente'
+                    ))
+                else:
+                    self.stdout.write(self.style.ERROR(
+                        f'✗ Error procesando {video.file.name}: No se pudo procesar el video'
+                    ))
             except Exception as e:
+                video.stream_status = 'error'
+                video.error_message = str(e)
+                video.save()
                 self.stdout.write(self.style.ERROR(
                     f'✗ Error procesando {video.file.name}: {str(e)}'
                 ))
