@@ -41,13 +41,22 @@ class Media(models.Model):
     
     def get_hls_manifest_url(self):
         """Retorna la URL del master playlist HLS"""
-        if self.is_stream_ready and self.hls_path:
-            # self.hls_path ahora almacena 'hls/<basename>'
-            if self.hls_path.startswith('hls/'):
-                return f"{settings.MEDIA_URL}{self.hls_path}/master.m3u8"
-            # fallback si se guardó completo
-            return os.path.join(settings.MEDIA_URL, self.hls_path, 'master.m3u8')
-        return None
+        if not self.hls_path:
+            return None
+        # Aceptar también antiguos estados 'completed'
+        if not (self.is_stream_ready or self.stream_status in ('ready', 'completed')):
+            return None
+
+        raw = self.hls_path.strip('/')
+        # Si accidentalmente incluye MEDIA_URL, removerlo
+        media_url_clean = settings.MEDIA_URL.strip('/')
+        if raw.startswith(media_url_clean):
+            raw = raw[len(media_url_clean):].lstrip('/')
+        # Si termina en master.m3u8 (estado antiguo) quitarlo para evitar duplicación
+        if raw.endswith('master.m3u8'):
+            raw = raw[:-len('master.m3u8')].rstrip('/')
+        # Ahora raw debería ser 'hls/<basename>'
+        return f"{settings.MEDIA_URL}{raw}/master.m3u8"
 
     def get_stream_url(self):
         """Retorna la URL para reproducción, HLS si está listo, sino el archivo original"""

@@ -65,7 +65,7 @@
                     const resp = await fetch(`/status/${media.id}/`);
                     if (!resp.ok) return;
                     const data = await resp.json();
-                    if (data.is_stream_ready || data.stream_status === 'ready') {
+                    if (data.is_stream_ready || data.stream_status === 'ready' || data.stream_status === 'completed') {
                         clearInterval(pollIntervals[media.id]);
                         delete pollIntervals[media.id];
                         media.stream_url = data.stream_url;
