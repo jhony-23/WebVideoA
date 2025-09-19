@@ -21,13 +21,13 @@ class Command(BaseCommand):
                 # Crear instancia del procesador con la ruta del archivo
                 processor = VideoProcessor(video.file.path)
                 # Procesar el video y actualizar el objeto Media
-                result = processor.process()
+                result = processor.transcode_video()
                 if result:
                     video.is_stream_ready = True
                     video.stream_status = 'completed'
-                    video.hls_path = processor.hls_path
-                    video.available_qualities = processor.available_qualities
-                    video.duration = processor.duration
+                    video.hls_path = f'hls/{video.file.name.replace(".mp4", "")}/master.m3u8'
+                    video.available_qualities = ['720p', '1080p']
+                    video.duration = processor.get_video_duration()
                     video.save()
                     self.stdout.write(self.style.SUCCESS(
                         f'✓ Video {video.file.name} procesado exitosamente'
