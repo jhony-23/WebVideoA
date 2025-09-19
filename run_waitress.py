@@ -3,24 +3,27 @@ from AdiclaVideo.wsgi import application
 import multiprocessing
 import os
 
-# Calcular el número óptimo de hilos (aumentamos a 4x CPUs para mejor rendimiento)
-threads = multiprocessing.cpu_count() * 4
+# Calcular el número óptimo de hilos (8x CPUs para streaming de video)
+threads = multiprocessing.cpu_count() * 8
 
-# Configuración ultra-optimizada para streaming de videos muy grandes
+print(f"Iniciando servidor con {threads} hilos...")
+
+# Configuración ultra-optimizada para streaming de videos
 serve(
     application, 
     host='0.0.0.0', 
     port=8000,
-    threads=threads,           # Número de hilos trabajadores (aumentado)
-    url_scheme='http',         # Esquema de URL
-    channel_timeout=1200,      # Tiempo de espera para conexiones (20 minutos para videos largos)
-    send_bytes=1048576,        # Tamaño del buffer de envío (1MB - óptimo para videos grandes)
-    connection_limit=2000,     # Límite de conexiones simultáneas
-    cleanup_interval=60,       # Intervalo de limpieza de conexiones inactivas
-    max_request_header_size=65536,  # Tamaño máximo de cabecera (64KB)
-    max_request_body_size=4294967296,  # Tamaño máximo del cuerpo (4GB para videos grandes)
-    outbuf_overflow=104857600,  # Buffer de desbordamiento (100MB - óptimo para videos de 80MB+)
-    inbuf_overflow=104857600,   # Buffer de entrada (100MB - óptimo para videos de 80MB+)
-    clear_untrusted_proxy_headers=False,  # Mantener cabeceras de proxy
-    asyncore_use_poll=True,    # Usar poll() en lugar de select() para mejor rendimiento
+    threads=threads,           # Más hilos para manejar más conexiones simultáneas
+    url_scheme='http',        
+    channel_timeout=300,       # 5 minutos de timeout (suficiente para chunks HLS)
+    send_bytes=262144,        # Buffer de envío de 256KB (óptimo para segmentos HLS)
+    connection_limit=1000,     # Límite de conexiones simultáneas
+    cleanup_interval=30,       # Limpieza más frecuente
+    max_request_header_size=32768,  # 32KB para headers
+    max_request_body_size=1073741824,  # 1GB máximo para uploads
+    outbuf_overflow=52428800,  # Buffer de 50MB (suficiente para segmentos HLS)
+    inbuf_overflow=52428800,   # Buffer de entrada de 50MB
+    clear_untrusted_proxy_headers=False,
+    asyncore_use_poll=True,    # Mejor rendimiento
+    adjust_system_limits=True  # Ajustar límites del sistema
 )
