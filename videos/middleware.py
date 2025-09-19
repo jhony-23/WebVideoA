@@ -1,7 +1,7 @@
 import re
 import os
 from django.conf import settings
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import StreamingHttpResponse, HttpResponse, FileResponse
 from django.urls import re_path
 from wsgiref.util import FileWrapper as WSGIFileWrapper
 
@@ -10,7 +10,7 @@ class RangeFileWrapper(object):
     """
     Wrapper para servir archivos en chunks con soporte para Range requests.
     """
-    def __init__(self, filelike, blksize=131072, offset=0, length=None):  # Aumentado a 128KB para videos grandes
+    def __init__(self, filelike, blksize=8388608, offset=0, length=None):  # 8MB por chunk para streaming eficiente
         self.filelike = filelike
         self.filelike.seek(offset, os.SEEK_SET)
         self.remaining = length
@@ -35,9 +35,12 @@ class RangeFileWrapper(object):
             return data
 
 class StreamingMediaMiddleware:
-    """
-    Middleware para servir archivos multimedia con soporte para streaming y Range requests.
-    Soporta HLS (.m3u8, .ts) y video progresivo.
+    """Middleware para servir videos MP4 con soporte de Range.
+
+    Se elimina intervención sobre HLS (.m3u8 / .ts) para que WhiteNoise/Django
+    los sirva directamente (reduce overhead y evita manipular cabeceras que
+    algunos players cachean de forma inesperada). Solo manejamos Range en
+    archivos grandes tipo MP4/WebM/Mov.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -79,41 +82,20 @@ class StreamingMediaMiddleware:
         # Content-Type específico para el tipo de archivo
         content_type = self.content_types.get(file_ext, 'application/octet-stream')
         
-        # HLS tiene tratamiento especial
+        # HLS: no intervenir (lo sirve WhiteNoise / default). Evitar overhead.
         if is_hls:
-            response = self.get_response(request)
-            if file_ext == '.m3u8':
-                # Manifests: cache corto para permitir actualizaciones
-                response['Cache-Control'] = 'public, max-age=5'
-            else:
-                # Segmentos .ts: cache largo, son inmutables
-                response['Cache-Control'] = 'public, max-age=31536000, immutable'
-            response['Access-Control-Allow-Origin'] = '*'  # Necesario para algunos players
-            response['Content-Type'] = content_type
-            return response
+            return self.get_response(request)
             
         # Si no es video o no hay Range header, servir normalmente
-        if not is_video or 'HTTP_RANGE' not in request.META:
-            # Para videos, añadir cabeceras de streaming aunque no haya Range request
-            if is_video:
-                response = self.get_response(request)
-                response['Accept-Ranges'] = 'bytes'
-                response['X-Accel-Buffering'] = 'yes'  # Habilitar buffering en proxy
-                
-                # Optimizaciones específicas para dispositivos de baja potencia como Smart TVs
-                user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-                is_tv = 'lg' in user_agent or 'webos' in user_agent or 'smart-tv' in user_agent or 'tv' in user_agent
-                
-                if is_tv:
-                    # Para Smart TVs, ajustar cabeceras para mejor reproducción
-                    response['Cache-Control'] = 'public, max-age=2592000'  # 30 días de caché para TVs
-                    # Sugerir pre-buffering más agresivo
-                    response.setdefault('Link', '<{}>; rel=preload; as=video'.format(request.path))
-                else:
-                    response['Cache-Control'] = 'public, max-age=604800, immutable'
-                
-                return response
+        if not is_video:
             return self.get_response(request)
+
+        # Sin Range: devolver respuesta completa (fallback). Navegadores suelen iniciar con Range.
+        if 'HTTP_RANGE' not in request.META:
+            resp = FileResponse(open(media_path, 'rb'), content_type=content_type)
+            resp['Accept-Ranges'] = 'bytes'
+            resp['Cache-Control'] = 'public, max-age=604800, immutable'
+            return resp
             
         # Manejar Range requests para video
         size = os.path.getsize(media_path)
@@ -123,15 +105,13 @@ class StreamingMediaMiddleware:
         user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
         is_tv = 'lg' in user_agent or 'webos' in user_agent or 'smart-tv' in user_agent or 'tv' in user_agent
         
-        # Ajustar tamaño de chunk para dispositivos
+        # Chunk adaptativo moderado: menos agresivo (reduce latencia inicial)
         if is_tv:
-            # Para Smart TVs, usar chunks más pequeños para evitar sobrecarga de memoria
-            chunk_size = 4 * 1024 * 1024  # 4MB para TVs
-            buffer_size = 65536  # 64KB para TVs
+            chunk_size = 5 * 1024 * 1024   # 5MB
+            buffer_size = 256 * 1024       # 256KB
         else:
-            # Para navegadores de escritorio, usar chunks más grandes
-            chunk_size = 20 * 1024 * 1024  # 20MB para escritorio
-            buffer_size = 131072  # 128KB para escritorio
+            chunk_size = 8 * 1024 * 1024   # 8MB
+            buffer_size = 512 * 1024       # 512KB
         
         # Parsear el header Range
         range_header = request.META['HTTP_RANGE']
@@ -156,7 +136,7 @@ class StreamingMediaMiddleware:
         # Abrir archivo con buffer optimizado para videos grandes
         try:
             # Abrir con buffer optimizado
-            buffer_value = 524288 if is_tv else 1048576  # 512KB para TVs, 1MB para escritorio
+            buffer_value = 512 * 1024 if is_tv else 1024 * 1024
             file_obj = open(media_path, 'rb', buffering=buffer_value)
             response = StreamingHttpResponse(
                 RangeFileWrapper(file_obj, buffer_size, offset=start, length=length),

@@ -104,3 +104,53 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Logging centralizado para diagnóstico de streaming y transcodificación
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} :: {message}',
+            'style': '{'
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'stream_file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'streaming.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+        'ffmpeg_file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'ffmpeg.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        }
+    },
+    'loggers': {
+        'videos.streaming': {
+            'handlers': ['console', 'stream_file'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'videos.ffmpeg': {
+            'handlers': ['console', 'ffmpeg_file'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING'
+        }
+    }
+}
