@@ -9,7 +9,7 @@ class Command(BaseCommand):
         # Obtener todos los videos que no están listos para HLS
         videos = Media.objects.filter(
             file__endswith='.mp4',  # Solo videos
-            is_ready=False  # No procesados
+            is_stream_ready=False  # No procesados
         )
         
         total = videos.count()
