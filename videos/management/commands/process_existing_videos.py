@@ -1,5 +1,6 @@
 import os
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from videos.models import Media
 from videos.utils import VideoProcessor
 
@@ -19,8 +20,17 @@ class Command(BaseCommand):
         for i, video in enumerate(videos, 1):
             self.stdout.write(f'Procesando video {i} de {total}: {video.file.name}')
             try:
+                # Construir la ruta completa al archivo
+                input_path = os.path.join(settings.MEDIA_ROOT, str(video.file))
+                
+                # Verificar que el archivo existe
+                if not os.path.exists(input_path):
+                    raise FileNotFoundError(f"El archivo no existe en: {input_path}")
+                
+                self.stdout.write(f'Ruta del archivo: {input_path}')
+                
                 # Crear instancia del procesador con la ruta del archivo
-                processor = VideoProcessor(video.file.path)
+                processor = VideoProcessor(input_path)
                 # Procesar el video y actualizar el objeto Media
                 result = processor.transcode_to_hls()
                 if result:
