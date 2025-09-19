@@ -8,6 +8,8 @@ class Command(BaseCommand):
     help = 'Procesa todos los videos existentes que no han sido convertidos a HLS'
 
     def handle(self, *args, **kwargs):
+        self.stdout.write(f'MEDIA_ROOT configurado en: {settings.MEDIA_ROOT}')
+        
         # Obtener todos los videos que no están listos para HLS
         videos = Media.objects.filter(
             file__endswith='.mp4',  # Solo videos
@@ -16,6 +18,11 @@ class Command(BaseCommand):
         
         total = videos.count()
         self.stdout.write(f'Encontrados {total} videos para procesar')
+        
+        # Mostrar información de cada video en la base de datos
+        self.stdout.write('\nVideos en la base de datos:')
+        for v in videos:
+            self.stdout.write(f'- {v.file.name} (Campo file completo: {v.file})')
         
         for i, video in enumerate(videos, 1):
             self.stdout.write(f'Procesando video {i} de {total}: {video.file.name}')
