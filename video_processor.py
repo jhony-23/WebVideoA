@@ -46,21 +46,22 @@ def process_video_queue():
                             qualities.append(quality)
                     
                     # Actualizar video
-                    pending.stream_status = 'completed'
+                    pending.stream_status = 'ready'
                     pending.is_stream_ready = True
-                    pending.hls_path = f'hls/{pending.file.name.replace(".mp4", "")}/master.m3u8'
+                    # Guardar solo el directorio base para reconstruir URL correctamente
+                    pending.hls_path = f'hls/{pending.file.name.replace(".mp4", "")}'
                     pending.available_qualities = qualities
                     pending.duration = duration
                     pending.save()
                     
                     print(f"✓ Video {pending.title} procesado exitosamente")
                 else:
-                    pending.stream_status = 'error'
+                    pending.stream_status = 'failed'
                     pending.save()
                     print(f"✗ Error procesando {pending.title}")
                     
             except Exception as e:
-                pending.stream_status = 'error'
+                pending.stream_status = 'failed'
                 pending.error_message = str(e)
                 pending.save()
                 print(f"✗ Error: {str(e)}")

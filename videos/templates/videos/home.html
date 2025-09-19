@@ -65,7 +65,7 @@
                     const resp = await fetch(`/status/${media.id}/`);
                     if (!resp.ok) return;
                     const data = await resp.json();
-                    if (data.is_stream_ready) {
+                    if (data.is_stream_ready || data.stream_status === 'ready') {
                         clearInterval(pollIntervals[media.id]);
                         delete pollIntervals[media.id];
                         media.stream_url = data.stream_url;
@@ -99,7 +99,7 @@
 
             // Solo precargar si es un video
             if (nextMedia.media_type === 'video' && !preloadedVideos[nextIndex]) {
-                const preloadVideo = new Video();
+                const preloadVideo = document.createElement('video');
                 preloadVideo.src = nextMedia.file;
                 preloadVideo.preload = 'auto';
                 preloadVideo.load();
