@@ -1,3 +1,4 @@
+import os
 from django.core.management.base import BaseCommand
 from videos.models import Media
 from videos.utils import VideoProcessor
@@ -21,13 +22,24 @@ class Command(BaseCommand):
                 # Crear instancia del procesador con la ruta del archivo
                 processor = VideoProcessor(video.file.path)
                 # Procesar el video y actualizar el objeto Media
-                result = processor.transcode_video()
+                result = processor.transcode_to_hls()
                 if result:
+                    # Obtener info del video
+                    video_info = processor._get_video_info()
+                    duration = float(video_info['streams'][0].get('duration', 0))
+                    
+                    # Determinar calidades disponibles basado en los archivos generados
+                    available_qualities = []
+                    for quality in ['720p', '1080p', '480p']:
+                        if os.path.exists(os.path.join(processor.output_dir, f'{quality}.m3u8')):
+                            available_qualities.append(quality)
+                    
+                    # Actualizar el objeto Media
                     video.is_stream_ready = True
                     video.stream_status = 'completed'
                     video.hls_path = f'hls/{video.file.name.replace(".mp4", "")}/master.m3u8'
-                    video.available_qualities = ['720p', '1080p']
-                    video.duration = processor.get_video_duration()
+                    video.available_qualities = available_qualities
+                    video.duration = duration
                     video.save()
                     self.stdout.write(self.style.SUCCESS(
                         f'✓ Video {video.file.name} procesado exitosamente'
