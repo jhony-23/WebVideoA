@@ -24,6 +24,5 @@ serve(
     outbuf_overflow=52428800,  # Buffer de 50MB (suficiente para segmentos HLS)
     inbuf_overflow=52428800,   # Buffer de entrada de 50MB
     clear_untrusted_proxy_headers=False,
-    asyncore_use_poll=True,    # Mejor rendimiento
-    adjust_system_limits=True  # Ajustar límites del sistema
+    asyncore_use_poll=True     # Mejor rendimiento
 )
