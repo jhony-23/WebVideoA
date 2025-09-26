@@ -13,7 +13,13 @@
 
 <body>
     <header>
-        <h1>Panel de Mercadotecnia ADICLA</h1>
+        <div class="header-content">
+            <h1>Panel de Mercadotecnia ADICLA</h1>
+            <div class="header-actions">
+                <a href="/" class="btn btn-home">🏠 Inicio</a>
+                <a href="{% url 'logout' %}" class="btn btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
     </header>
 
     <main>
@@ -91,17 +97,11 @@
                 
                 <!-- Link al reproductor -->
                 <div>
-                    <a href="/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                    <a href="/videos" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">
                         📺 Ver Reproducción Actual
                     </a>
                 </div>
                 
-                <!-- Logout -->
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                    <a href="{% url 'logout' %}" style="color: #6c757d; text-decoration: none; font-size: 14px;">
-                        🚪 Cerrar Sesión
-                    </a>
-                </div>
                 
             </div>
         </section>
@@ -225,8 +225,10 @@
                         
                         const data = await response.json();
                         if (data.success) {
-                            // Redirigir al reproductor
-                            window.location.href = data.redirect;
+                            // Mostrar mensaje de éxito y actualizar estado
+                            alert('✅ ' + data.message);
+                            // Recargar página para actualizar el estado
+                            window.location.reload();
                         } else {
                             alert('Error: ' + (data.error || 'No se pudo iniciar la reproducción'));
                             this.disabled = false;

@@ -2,9 +2,13 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.home, name='home'),
+    # Nueva página principal - Landing de ADICLA
+    path('', views.landing_page, name='landing'),
     
-    # Auth
+    # Videos movido aquí
+    path('videos/', views.home, name='home'),
+    
+    # Auth para videos
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     
@@ -12,6 +16,11 @@ urlpatterns = [
     path('upload/', views.upload_media, name='upload'),
     path('edit/<int:media_id>/', views.edit_media, name='edit_media'),
     path('delete/<int:media_id>/', views.delete_media, name='delete_media'),
+    
+    # Gestión de Tareas
+    path('tareas/', views.tareas_dashboard, name='tareas_dashboard'),
+    path('tareas/login/', views.tareas_login, name='tareas_login'),
+    path('tareas/logout/', views.tareas_logout, name='tareas_logout'),
     
     # Playlist control
     path('api/playlist/start/', views.start_playlist, name='start_playlist'),

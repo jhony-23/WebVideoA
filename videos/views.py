@@ -154,7 +154,7 @@ def start_playlist(request):
     state.started_at = timezone.now()
     state.save()
     
-    return JsonResponse({'success': True, 'redirect': '/'})
+    return JsonResponse({'success': True, 'message': 'Reproducción iniciada exitosamente'})
 
 @require_POST  
 @login_required
@@ -212,3 +212,70 @@ def sync_status(request):
         'current_index': state.get_current_index(),
         'total_items': len(state.playlist_data)
     })
+
+# ===================== NUEVAS VISTAS PARA LA PLATAFORMA ADICLA =====================
+
+def landing_page(request):
+    """Nueva página de inicio - Landing de ADICLA"""
+    return render(request, 'videos/landing.html')
+
+def tareas_login(request):
+    """Login para Gestión de Tareas con validación @adicla.org.gt"""
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
+        
+        # Validar dominio @adicla.org.gt
+        if not email.endswith('@adicla.org.gt'):
+            messages.error(request, 'Solo se permiten usuarios con dominio @adicla.org.gt')
+            return render(request, 'videos/tareas_login.html')
+        
+        # Crear usuario si no existe (registro automático)
+        from django.contrib.auth.models import User
+        user, created = User.objects.get_or_create(
+            username=email,
+            defaults={
+                'email': email,
+                'first_name': email.split('@')[0],
+            }
+        )
+        
+        if created:
+            user.set_password(password)
+            user.save()
+            messages.success(request, f'Usuario creado exitosamente: {email}')
+        else:
+            # Verificar contraseña
+            if not user.check_password(password):
+                messages.error(request, 'Contraseña incorrecta')
+                return render(request, 'videos/tareas_login.html')
+        
+        # Iniciar sesión
+        login(request, user)
+        request.session['tareas_user'] = True
+        return redirect('tareas_dashboard')
+    
+    return render(request, 'videos/tareas_login.html')
+
+def tareas_logout(request):
+    """Cerrar sesión de Gestión de Tareas"""
+    if 'tareas_user' in request.session:
+        del request.session['tareas_user']
+    logout(request)
+    return redirect('tareas_login')
+
+def tareas_dashboard(request):
+    """Dashboard principal de Gestión de Tareas"""
+    # Verificar que sea un usuario de tareas
+    if not request.user.is_authenticated or not request.session.get('tareas_user'):
+        return redirect('tareas_login')
+    
+    # Verificar dominio del usuario
+    if not request.user.email.endswith('@adicla.org.gt'):
+        messages.error(request, 'Acceso no autorizado')
+        return redirect('tareas_login')
+    
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'videos/tareas_dashboard.html', context)
