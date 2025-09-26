@@ -1,8 +1,114 @@
 from django.db import models
 from django.db.models.signals import pre_save, post_delete
 from django.dispatch import receiver
+from django.contrib.auth.models import User
 import os
+import json
 from django.conf import settings
+from django.utils import timezone
+
+class PlaylistState(models.Model):
+    """Estado global de la reproducción sincronizada"""
+    is_active = models.BooleanField(default=False)
+    current_media_id = models.IntegerField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    playlist_data = models.JSONField(default=list, blank=True)  # Lista de IDs shuffled
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'playlist_state'
+    
+    @classmethod
+    def get_current_state(cls):
+        """Obtiene o crea el estado actual"""
+        state, created = cls.objects.get_or_create(pk=1)
+        return state
+    
+    def get_current_media(self):
+        """Obtiene el media actual basado en el tiempo transcurrido y duración"""
+        if not self.playlist_data or not self.is_active or not self.started_at:
+            return None
+        
+        # Calcular qué elemento debería estar reproduciéndose ahora
+        total_elapsed = int((timezone.now() - self.started_at).total_seconds())
+        current_time = 0
+        
+        for i, media_id in enumerate(self.playlist_data):
+            try:
+                media = Media.objects.get(id=media_id)
+                
+                # Duración del elemento actual
+                if media.media_type == 'image':
+                    duration = 10  # Imágenes 10 segundos
+                else:
+                    duration = int(media.duration) if media.duration else 30
+                
+                # Si estamos dentro del tiempo de este elemento
+                if total_elapsed < current_time + duration:
+                    # Actualizar current_media_id si cambió
+                    if self.current_media_id != media_id:
+                        self.current_media_id = media_id
+                        self.save()
+                    return media
+                
+                current_time += duration
+                
+            except Media.DoesNotExist:
+                continue
+        
+        # Si llegamos aquí, la playlist terminó - reiniciar
+        if self.playlist_data:
+            first_media_id = self.playlist_data[0]
+            try:
+                first_media = Media.objects.get(id=first_media_id)
+                self.started_at = timezone.now()  # Reiniciar tiempo
+                self.current_media_id = first_media_id
+                self.save()
+                return first_media
+            except Media.DoesNotExist:
+                pass
+        
+        return None
+    
+    def get_elapsed_time(self):
+        """Calcula tiempo transcurrido del media actual en segundos"""
+        if not self.started_at or not self.is_active or not self.playlist_data:
+            return 0
+        
+        total_elapsed = int((timezone.now() - self.started_at).total_seconds())
+        current_time = 0
+        
+        for media_id in self.playlist_data:
+            try:
+                media = Media.objects.get(id=media_id)
+                
+                # Duración del elemento
+                if media.media_type == 'image':
+                    duration = 10
+                else:
+                    duration = int(media.duration) if media.duration else 30
+                
+                # Si es el elemento actual, devolver tiempo dentro de él
+                if total_elapsed < current_time + duration:
+                    return total_elapsed - current_time
+                
+                current_time += duration
+                
+            except Media.DoesNotExist:
+                continue
+        
+        return 0
+
+    def get_current_index(self):
+        """Obtiene el índice actual en la playlist"""
+        if not self.playlist_data or not self.current_media_id:
+            return 0
+        
+        try:
+            return self.playlist_data.index(self.current_media_id)
+        except ValueError:
+            return 0
 
 class Media(models.Model):
     MEDIA_TYPES = (

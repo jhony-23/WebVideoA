@@ -28,13 +28,11 @@
         <img id="image-player" style="display:none;" alt="Media">
     </div>
 
-    {{ media_items|json_script:"media-data" }}
-
     <!-- HLS.js para streaming adaptativo -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        const mediaList = JSON.parse(document.getElementById('media-data').textContent);
+        // =============== SISTEMA SINCRONIZADO LIVE ===============
         const videoPlayer = document.getElementById('video-player');
         const imagePlayer = document.getElementById('image-player');
         const titleDiv = document.getElementById('media-title');
@@ -42,14 +40,22 @@
         const playButton = document.getElementById('play-button');
         const bufferIndicator = document.getElementById('buffer-indicator');
 
-        // HLS instance
+        // Estado de sincronización
         let hls = null;
-        const pollIntervals = {}; // media_id -> interval id
+        let syncInterval = null;
+        let currentMediaData = null;
+        let isPlaying = false;
 
         function setStatus(text, type = 'info') {
             const banner = document.getElementById('status-banner');
             banner.style.display = 'block';
-            const colors = { info: '#333', ready: '#2d6a4f', error: '#8b0000', waiting: '#6c5d1a' };
+            const colors = { 
+                info: '#333', 
+                live: '#dc3545',  // Rojo para LIVE
+                ready: '#2d6a4f', 
+                error: '#8b0000', 
+                waiting: '#6c5d1a' 
+            };
             banner.style.background = colors[type] || '#333';
             banner.textContent = text;
         }
@@ -59,58 +65,129 @@
             banner.style.display = 'none';
         }
 
-        async function pollStreamReady(media) {
-            // Evitar doble polling
-            if (pollIntervals[media.id]) return;
-            setStatus('Procesando HLS para ' + media.title + '...', 'waiting');
-            pollIntervals[media.id] = setInterval(async () => {
-                try {
-                    const resp = await fetch(`/status/${media.id}/`);
-                    if (!resp.ok) return;
-                    const data = await resp.json();
-                    if (data.is_stream_ready || data.stream_status === 'ready' || data.stream_status === 'completed') {
-                        clearInterval(pollIntervals[media.id]);
-                        delete pollIntervals[media.id];
-                        media.stream_url = data.stream_url;
-                        media.is_stream_ready = true;
-                        setStatus('Listo: ' + media.title + ' (HLS)', 'ready');
-                        if (currentIndex !== undefined && mediaList[currentIndex].id === media.id) {
-                            // Reproducir nuevamente usando HLS sin cambiar el orden
-                            startHlsPlayback(media);
-                        }
-                    } else if (data.stream_status === 'failed') {
-                        clearInterval(pollIntervals[media.id]);
-                        delete pollIntervals[media.id];
-                        setStatus('Error procesando ' + media.title, 'error');
-                    }
-                } catch (e) {
-                    console.warn('Polling error', e);
+        async function checkSyncStatus() {
+            try {
+                const response = await fetch('/api/sync/');
+                const data = await response.json();
+                
+                if (!data.active) {
+                    // No hay reproducción activa
+                    setStatus('⏸️ Sin transmisión activa', 'waiting');
+                    stopCurrentMedia();
+                    return;
                 }
-            }, 5000);
-        }
 
-        let currentIndex = 0;
-        let nextIndex = 1;
-        let preloadedVideos = {};
+                // Hay contenido activo
+                const media = data.current_media;
+                const elapsed = data.elapsed;
+                const duration = data.duration;
 
-        // Función para precargar el siguiente video
-        function preloadNextVideo() {
-            if (mediaList.length <= 1) return;
+                // Mostrar estado LIVE
+                setStatus(`🔴 LIVE - ${media.title} (${data.current_index + 1}/${data.total_items})`, 'live');
+                titleDiv.textContent = media.title;
 
-            nextIndex = (currentIndex + 1) % mediaList.length;
-            const nextMedia = mediaList[nextIndex];
+                // Si es diferente media, cambiar
+                if (!currentMediaData || currentMediaData.id !== media.id) {
+                    currentMediaData = media;
+                    playCurrentMedia(media, elapsed);
+                }
 
-            // Solo precargar si es un video
-            if (nextMedia.media_type === 'video' && !preloadedVideos[nextIndex]) {
-                const preloadVideo = document.createElement('video');
-                preloadVideo.src = nextMedia.file;
-                preloadVideo.preload = 'auto';
-                preloadVideo.load();
-                preloadedVideos[nextIndex] = preloadVideo;
+            } catch (error) {
+                console.warn('Error sync:', error);
+                setStatus('❌ Error de conexión', 'error');
             }
         }
 
-        // Función para reproducir fullscreen
+        function playCurrentMedia(media, startFrom = 0) {
+            stopCurrentMedia();
+            
+            if (media.media_type === 'video') {
+                playVideo(media, startFrom);
+            } else if (media.media_type === 'image') {
+                playImage(media, startFrom);
+            }
+        }
+
+        function playVideo(media, startFrom = 0) {
+            imagePlayer.style.display = 'none';
+            bufferIndicator.style.display = 'block';
+            videoPlayer.style.display = 'block';
+
+            const videoUrl = media.stream_url || media.file;
+
+            // Si es HLS
+            if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
+                hls = new Hls({
+                    maxBufferLength: 10,
+                    maxMaxBufferLength: 30,
+                    maxBufferSize: 30 * 1000 * 1000,
+                    enableWorker: true,
+                    lowLatencyMode: false,
+                    backBufferLength: 60,
+                    startLevel: -1,
+                    abrEwmaDefaultEstimate: 500000,
+                    abrBandWidthFactor: 0.95,
+                    abrBandWidthUpFactor: 0.7,
+                    fragLoadingTimeOut: 15000,
+                    manifestLoadingTimeOut: 8000,
+                    maxBufferHole: 0.5
+                });
+
+                hls.loadSource(videoUrl);
+                hls.attachMedia(videoPlayer);
+                
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    bufferIndicator.style.display = 'none';
+                    videoPlayer.currentTime = startFrom;
+                    videoPlayer.play().catch(console.warn);
+                });
+                
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        console.error('HLS Error:', data);
+                        // Fallback a MP4
+                        if (hls) { hls.destroy(); hls = null; }
+                        playVideoTag(media, startFrom);
+                    }
+                });
+            } else {
+                // Reproducción directa MP4
+                playVideoTag(media, startFrom);
+            }
+        }
+
+        function playVideoTag(media, startFrom = 0) {
+            videoPlayer.src = media.file;
+            videoPlayer.oncanplay = function () {
+                bufferIndicator.style.display = 'none';
+                videoPlayer.currentTime = startFrom;
+                videoPlayer.play().catch(console.warn);
+            };
+            videoPlayer.onwaiting = function () { bufferIndicator.style.display = 'block'; };
+            videoPlayer.onplaying = function () { bufferIndicator.style.display = 'none'; };
+            videoPlayer.load();
+        }
+
+        function playImage(media, startFrom = 0) {
+            if (hls) { hls.destroy(); hls = null; }
+            videoPlayer.style.display = 'none';
+            bufferIndicator.style.display = 'none';
+            imagePlayer.src = media.file;
+            imagePlayer.style.display = 'block';
+        }
+
+        function stopCurrentMedia() {
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
+            videoPlayer.pause();
+            videoPlayer.src = '';
+            videoPlayer.style.display = 'none';
+            imagePlayer.style.display = 'none';
+            bufferIndicator.style.display = 'none';
+        }
+
         function requestFullScreen(element) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
@@ -121,130 +198,25 @@
             }
         }
 
-        // Función mejorada para reproducir media con mejor manejo de buffering
-        function playMedia(index) {
-            if (!mediaList.length) return;
-
-            const media = mediaList[index];
-            titleDiv.textContent = media.title;
-
-            if (media.media_type === 'video') {
-                imagePlayer.style.display = 'none';
-                bufferIndicator.style.display = 'block';
-                videoPlayer.style.display = 'block';
-
-                // Destruir instancia HLS previa si existe
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
-
-                // Determinar URL (HLS o fallback)
-                const videoUrl = media.stream_url || media.file;
-
-                // Si aún no está listo el HLS pero hay procesamiento pendiente -> iniciar polling
-                if (!media.is_stream_ready && media.stream_status && media.stream_status !== 'failed') {
-                    pollStreamReady(media);
-                }
-
-                // Si es HLS y el navegador lo soporta
-                if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
-                    startHlsPlayback(media, videoUrl);
-                } else {
-                    startTagPlayback(media);
-                }
-            } else if (media.media_type === 'image') {
-                // ... existing image logic remains below (unchanged) ...
-                if (hls) { hls.destroy(); hls = null; }
-                videoPlayer.pause();
-                videoPlayer.style.display = 'none';
-                bufferIndicator.style.display = 'none';
-                imagePlayer.src = media.file;
-                imagePlayer.style.display = 'block';
-                setTimeout(() => {
-                    currentIndex = (currentIndex + 1) % mediaList.length;
-                    playMedia(currentIndex);
-                }, 10000);
-                preloadNextVideo();
-            }
-        }
-
-        function startHlsPlayback(media, urlOverride) {
-            const videoUrl = urlOverride || media.stream_url || media.file;
-            hls = new Hls({
-                maxBufferLength: 10,          // Buffer de 10s (más eficiente)
-                maxMaxBufferLength: 30,       // Máximo 30s de buffer
-                maxBufferSize: 30 * 1000 * 1000,  // 30MB máximo en buffer
-                enableWorker: true,           // Usar Web Worker para mejor rendimiento
-                lowLatencyMode: false,        // Modo VOD para streaming estable
-                backBufferLength: 90,         // 90s de buffer hacia atrás
-                startLevel: -1,               // Auto-seleccionar calidad inicial
-                abrEwmaDefaultEstimate: 500000, // 500kbps estimado inicial
-                abrBandWidthFactor: 0.95,      // Factor conservador para cambios de calidad
-                abrBandWidthUpFactor: 0.7,     // Más conservador al subir calidad
-                fragLoadingTimeOut: 20000,      // 20s timeout para segmentos
-                manifestLoadingTimeOut: 10000,  // 10s timeout para manifests
-                maxBufferHole: 0.5,           // Hueco máximo 0.5s
-                stretchShortVideoTrack: true, // Para videos cortos
-            });
-
-            hls.loadSource(videoUrl);
-            hls.attachMedia(videoPlayer);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                bufferIndicator.style.display = 'none';
-                videoPlayer.play();
-                preloadNextVideo();
-            });
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    console.error('Error HLS:', data);
-                    setStatus('Fallo HLS, usando MP4', 'error');
-                    if (hls) { hls.destroy(); hls = null; }
-                    startTagPlayback(media);
-                }
-            });
-        }
-
-        function startTagPlayback(media) {
-            videoPlayer.src = media.file;
-            videoPlayer.oncanplay = function () {
-                bufferIndicator.style.display = 'none';
-                videoPlayer.play();
-                preloadNextVideo();
-            };
-            videoPlayer.onwaiting = function () { bufferIndicator.style.display = 'block'; };
-            videoPlayer.onplaying = function () { bufferIndicator.style.display = 'none'; };
-            videoPlayer.load();
-        }
-
-        videoPlayer.addEventListener('ended', () => {
-            currentIndex = (currentIndex + 1) % mediaList.length;
-            playMedia(currentIndex);
-        });
-
-        // Al presionar PLAY
+        // Iniciar sincronización cuando presionen PLAY
         playButton.addEventListener('click', () => {
-            startScreen.style.display = 'none'; // Oculta pantalla de inicio
-            playMedia(currentIndex);
-            requestFullScreen(document.documentElement); // fullscreen nativo
-        });
-
-        // Configurar video para mejor streaming
-        videoPlayer.addEventListener('loadedmetadata', function () {
-            // Si el navegador soporta buffering hints
-            if ('buffered' in videoPlayer) {
-                videoPlayer.autobuffer = true;
-            }
+            startScreen.style.display = 'none';
+            isPlaying = true;
+            
+            // Iniciar polling cada 3 segundos
+            syncInterval = setInterval(checkSyncStatus, 3000);
+            
+            // Primera verificación inmediata
+            checkSyncStatus();
+            
+            // Pantalla completa
+            requestFullScreen(document.documentElement);
         });
 
         // Manejar errores de video
         videoPlayer.addEventListener('error', function (e) {
-            console.error('Error en reproducción de video:', videoPlayer.error);
-            bufferIndicator.textContent = 'Error al cargar el video. Intentando siguiente...';
-            setTimeout(() => {
-                currentIndex = (currentIndex + 1) % mediaList.length;
-                playMedia(currentIndex);
-            }, 3000);
+            console.error('Error en video:', videoPlayer.error);
+            setStatus('❌ Error cargando video', 'error');
         });
     </script>
 </body>

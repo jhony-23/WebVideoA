@@ -1,10 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from .models import Media
+from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from .models import Media, PlaylistState
 from .forms import MediaForm
 from django.contrib import messages
 from django.utils.timezone import localtime
+import json
+import random
 
 def home(request):
     media_qs = Media.objects.all().order_by('uploaded_at')
@@ -26,30 +32,6 @@ def home(request):
     return render(request, 'videos/home.html', {'media_items': media_items})
 
 
-def upload_media(request):
-    if request.method == 'POST':
-        form = MediaForm(request.POST, request.FILES)
-        if form.is_valid():
-            media = form.save()
-            # Respuesta JSON para peticiones AJAX
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({
-                    'id': media.id,
-                    'title': media.title,
-                    'status': media.stream_status,
-                    'is_stream_ready': media.is_stream_ready,
-                    'stream_url': media.get_stream_url(),
-                })
-            messages.success(request, 'Contenido subido correctamente')
-            return redirect('upload')
-    else:
-        form = MediaForm()
-
-    media_items = Media.objects.all().order_by('-uploaded_at')
-    return render(request, 'videos/upload.html', {
-        'form': form,
-        'media_items': media_items,
-    })
 
 def edit_media(request, media_id):
     media = get_object_or_404(Media, id=media_id)
@@ -90,4 +72,143 @@ def media_status(request, media_id):
         'available_qualities': media.available_qualities,
         'stream_url': media.get_stream_url(),
         'error_message': media.error_message,
+    })
+
+# ============ NUEVAS VISTAS PARA SISTEMA LIVE ============
+
+def login_view(request):
+    """Vista de login para upload"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        # Autenticar con email como username
+        user = authenticate(request, username=email, password=password)
+        if user is not None and user.email == 'publicidad@adicla.org.gt':
+            # Configurar sesión de 8 horas (28800 segundos)
+            request.session.set_expiry(28800)
+            login(request, user)
+            return redirect('upload')
+        else:
+            messages.error(request, 'Credenciales inválidas')
+    
+    return render(request, 'videos/login.html')
+
+def logout_view(request):
+    """Cerrar sesión"""
+    logout(request)
+    return redirect('login')
+
+@login_required
+def upload_media(request):
+    """Vista de upload protegida con login"""
+    if request.method == 'POST':
+        form = MediaForm(request.POST, request.FILES)
+        if form.is_valid():
+            media = form.save()
+            # Respuesta JSON para peticiones AJAX
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'id': media.id,
+                    'title': media.title,
+                    'status': media.stream_status,
+                    'is_stream_ready': media.is_stream_ready,
+                    'stream_url': media.get_stream_url(),
+                })
+            messages.success(request, 'Contenido subido correctamente')
+            return redirect('upload')
+    else:
+        form = MediaForm()
+
+    # Estado de reproducción para mostrar botón correcto
+    state = PlaylistState.get_current_state()
+    
+    media_items = Media.objects.all().order_by('-uploaded_at')
+    return render(request, 'videos/upload.html', {
+        'form': form,
+        'media_items': media_items,
+        'playlist_state': state,
+    })
+
+@require_POST
+@login_required
+def start_playlist(request):
+    """Iniciar reproducción sincronizada"""
+    state = PlaylistState.get_current_state()
+    
+    # Generar playlist aleatoria
+    videos = list(Media.objects.filter(media_type='video', is_stream_ready=True))
+    images = list(Media.objects.filter(media_type='image'))
+    
+    # Combinar y shuffle
+    all_media = videos + images
+    random.shuffle(all_media)
+    
+    if not all_media:
+        return JsonResponse({'error': 'No hay contenido disponible'}, status=400)
+    
+    # Actualizar estado
+    state.is_active = True
+    state.current_media_id = all_media[0].id
+    state.playlist_data = [m.id for m in all_media]
+    state.started_at = timezone.now()
+    state.save()
+    
+    return JsonResponse({'success': True, 'redirect': '/'})
+
+@require_POST  
+@login_required
+def stop_playlist(request):
+    """Detener reproducción sincronizada"""
+    state = PlaylistState.get_current_state()
+    state.is_active = False
+    state.current_media_id = None
+    state.started_at = None
+    state.save()
+    
+    return JsonResponse({'success': True})
+
+@require_GET
+def sync_status(request):
+    """API para sincronización de clientes"""
+    state = PlaylistState.get_current_state()
+    
+    if not state.is_active or not state.playlist_data:
+        return JsonResponse({
+            'active': False,
+            'message': 'Reproducción no iniciada'
+        })
+    
+    current_media = state.get_current_media()
+    if not current_media:
+        return JsonResponse({
+            'active': False,
+            'message': 'Media no encontrado'
+        })
+    
+    elapsed = state.get_elapsed_time()
+    
+    # Determinar duración según tipo
+    if current_media.media_type == 'image':
+        duration = 10  # 10 segundos para imágenes
+    else:
+        duration = current_media.duration or 0
+    
+    # Serializar media actual
+    stream_url = current_media.get_stream_url() if current_media.media_type == 'video' else current_media.file.url
+    
+    return JsonResponse({
+        'active': True,
+        'current_media': {
+            'id': current_media.id,
+            'title': current_media.title,
+            'file': current_media.file.url,
+            'media_type': current_media.media_type,
+            'stream_url': stream_url,
+            'is_stream_ready': current_media.is_stream_ready,
+        },
+        'elapsed': elapsed,
+        'duration': duration,
+        'current_index': state.get_current_index(),
+        'total_items': len(state.playlist_data)
     })

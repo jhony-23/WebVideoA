@@ -56,6 +56,56 @@
             </form>
         </section>
 
+        <!-- PANEL DE CONTROL DE REPRODUCCIÓN -->
+        <section class="form-section">
+            <h2>Control de Reproducción</h2>
+            <div style="text-align: center; padding: 20px;">
+                
+                <!-- Estado actual -->
+                <div id="playlist-status" style="margin-bottom: 20px;">
+                    {% if playlist_state.is_active %}
+                        <div style="color: #28a745; font-weight: bold; font-size: 18px; margin-bottom: 10px;">
+                            🟢 REPRODUCCIÓN ACTIVA
+                        </div>
+                        <p style="color: #666;">Todas las pantallas pueden ver el contenido sincronizado</p>
+                    {% else %}
+                        <div style="color: #dc3545; font-weight: bold; font-size: 18px; margin-bottom: 10px;">
+                            🔴 REPRODUCCIÓN DETENIDA
+                        </div>
+                        <p style="color: #666;">Presiona "Iniciar" para comenzar la transmisión</p>
+                    {% endif %}
+                </div>
+
+                <!-- Botones de control -->
+                <div style="margin-bottom: 15px;">
+                    {% if playlist_state.is_active %}
+                        <button id="stop-btn" class="btn" style="background-color: #dc3545; color: white; padding: 15px 30px; font-size: 1.1em; border: none; border-radius: 5px; cursor: pointer;">
+                            ⏹️ DETENER REPRODUCCIÓN
+                        </button>
+                    {% else %}
+                        <button id="start-btn" class="btn" style="background-color: #28a745; color: white; padding: 15px 30px; font-size: 1.1em; border: none; border-radius: 5px; cursor: pointer;">
+                            ▶️ INICIAR REPRODUCCIÓN
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <!-- Link al reproductor -->
+                <div>
+                    <a href="/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                        📺 Ver Reproducción Actual
+                    </a>
+                </div>
+                
+                <!-- Logout -->
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <a href="{% url 'logout' %}" style="color: #6c757d; text-decoration: none; font-size: 14px;">
+                        🚪 Cerrar Sesión
+                    </a>
+                </div>
+                
+            </div>
+        </section>
+
         <!-- LISTA DE VIDEOS/IMÁGENES -->
         <section class="videos-section">
             <h2>Contenido Subido</h2>
@@ -80,7 +130,6 @@
                     </div>
 
                     <div class="video-actions">
-                        <a href="{% url 'edit_video' media_id=media.id %}" class="btn btn-edit">✏️ Editar</a>
                         <button type="button" class="btn btn-delete" data-video-id="{{ media.id }}"
                             data-video-title="{{ media.title }}">🗑️ Eliminar</button>
                     </div>
@@ -153,6 +202,73 @@
             cancelBtn.addEventListener("click", function () {
                 modal.style.display = "none";
             });
+        });
+
+        // Control de playlist
+        document.addEventListener('DOMContentLoaded', function () {
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+
+            if (startBtn) {
+                startBtn.addEventListener('click', async function() {
+                    this.disabled = true;
+                    this.textContent = '⏳ Iniciando...';
+                    
+                    try {
+                        const response = await fetch('/api/playlist/start/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            // Redirigir al reproductor
+                            window.location.href = data.redirect;
+                        } else {
+                            alert('Error: ' + (data.error || 'No se pudo iniciar la reproducción'));
+                            this.disabled = false;
+                            this.textContent = '▶️ INICIAR REPRODUCCIÓN';
+                        }
+                    } catch (error) {
+                        alert('Error de conexión');
+                        this.disabled = false;
+                        this.textContent = '▶️ INICIAR REPRODUCCIÓN';
+                    }
+                });
+            }
+
+            if (stopBtn) {
+                stopBtn.addEventListener('click', async function() {
+                    this.disabled = true;
+                    this.textContent = '⏳ Deteniendo...';
+                    
+                    try {
+                        const response = await fetch('/api/playlist/stop/', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            location.reload(); // Recargar para actualizar estado
+                        } else {
+                            alert('Error al detener la reproducción');
+                            this.disabled = false;
+                            this.textContent = '⏹️ DETENER REPRODUCCIÓN';
+                        }
+                    } catch (error) {
+                        alert('Error de conexión');
+                        this.disabled = false;
+                        this.textContent = '⏹️ DETENER REPRODUCCIÓN';
+                    }
+                });
+            }
         });
     </script>
 
