@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.core.exceptions import PermissionDenied
@@ -323,3 +324,112 @@ def repositorio_logout(request):
     """Cerrar sesión de repositorio"""
     logout(request)
     return redirect('repositorio_login')
+
+# =============== SISTEMA DE RECUPERACIÓN DE CONTRASEÑAS ===============
+
+def upload_password_reset(request):
+    """Recuperación de contraseña para upload/admin"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validaciones
+        if not email or not password or not confirm_password:
+            messages.error(request, 'Todos los campos son obligatorios')
+            return render(request, 'videos/upload_password_reset.html')
+        
+        if password != confirm_password:
+            messages.error(request, 'Las contraseñas no coinciden')
+            return render(request, 'videos/upload_password_reset.html')
+        
+        if len(password) < 6:
+            messages.error(request, 'La contraseña debe tener al menos 6 caracteres')
+            return render(request, 'videos/upload_password_reset.html')
+        
+        # Verificar que el usuario existe
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            messages.success(request, f'🎉 ¡Contraseña actualizada exitosamente para {email}! Ya puedes iniciar sesión con tu nueva contraseña.')
+            return redirect('login')
+        except User.DoesNotExist:
+            messages.error(request, f'❌ No existe un usuario registrado con el email: {email}')
+            return render(request, 'videos/upload_password_reset.html')
+    
+    return render(request, 'videos/upload_password_reset.html')
+
+def tareas_password_reset(request):
+    """Recuperación de contraseña para tareas"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validaciones
+        if not email or not password or not confirm_password:
+            messages.error(request, 'Todos los campos son obligatorios')
+            return render(request, 'videos/tareas_password_reset.html')
+        
+        if not email.endswith('@adicla.org.gt'):
+            messages.error(request, 'Solo se permiten correos @adicla.org.gt')
+            return render(request, 'videos/tareas_password_reset.html')
+        
+        if password != confirm_password:
+            messages.error(request, 'Las contraseñas no coinciden')
+            return render(request, 'videos/tareas_password_reset.html')
+        
+        if len(password) < 6:
+            messages.error(request, 'La contraseña debe tener al menos 6 caracteres')
+            return render(request, 'videos/tareas_password_reset.html')
+        
+        # Verificar que el usuario existe y actualizar contraseña
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            messages.success(request, f'🎉 ¡Contraseña actualizada exitosamente para {email}! Ya puedes acceder a Gestión de Tareas con tu nueva contraseña.')
+            return redirect('tareas_login')
+        except User.DoesNotExist:
+            messages.error(request, f'❌ No existe un usuario registrado con el email: {email}. Contacta al administrador para crear tu cuenta.')
+            return render(request, 'videos/tareas_password_reset.html')
+    
+    return render(request, 'videos/tareas_password_reset.html')
+
+def repositorio_password_reset(request):
+    """Recuperación de contraseña para repositorio"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        # Validaciones
+        if not email or not password or not confirm_password:
+            messages.error(request, 'Todos los campos son obligatorios')
+            return render(request, 'videos/repositorio_password_reset.html')
+        
+        if not email.endswith('@adicla.org.gt'):
+            messages.error(request, 'Solo se permiten correos @adicla.org.gt')
+            return render(request, 'videos/repositorio_password_reset.html')
+        
+        if password != confirm_password:
+            messages.error(request, 'Las contraseñas no coinciden')
+            return render(request, 'videos/repositorio_password_reset.html')
+        
+        if len(password) < 6:
+            messages.error(request, 'La contraseña debe tener al menos 6 caracteres')
+            return render(request, 'videos/repositorio_password_reset.html')
+        
+        # Verificar que el usuario existe y actualizar contraseña
+        try:
+            user = User.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            messages.success(request, f'🎉 ¡Contraseña actualizada exitosamente para {email}! Ya puedes acceder al Repositorio con tu nueva contraseña.')
+            return redirect('repositorio_login')
+        except User.DoesNotExist:
+            messages.error(request, f'❌ No existe un usuario registrado con el email: {email}. Contacta al administrador para crear tu cuenta.')
+            return render(request, 'videos/repositorio_password_reset.html')
+    
+    return render(request, 'videos/repositorio_password_reset.html')

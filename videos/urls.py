@@ -26,6 +26,11 @@ urlpatterns = [
     path('repositorio/', views.repositorio_view, name='repositorio'),
     path('repositorio/login/', views.repositorio_login, name='repositorio_login'),
     path('repositorio/logout/', views.repositorio_logout, name='repositorio_logout'),
+    path('repositorio/password-reset/', views.repositorio_password_reset, name='repositorio_password_reset'),
+    
+    # Recuperación de contraseñas
+    path('upload/password-reset/', views.upload_password_reset, name='upload_password_reset'),
+    path('tareas/password-reset/', views.tareas_password_reset, name='tareas_password_reset'),
     
     # Playlist control
     path('api/playlist/start/', views.start_playlist, name='start_playlist'),

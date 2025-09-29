@@ -5,14 +5,13 @@
 <head>
     <meta charset="UTF-8">
     <title>Acceso - Panel ADICLA</title>
-    <link rel="icon" type="image/svg+xml" href="{% static 'videos/img/favicon_institucion.svg' %}?v=3">
-    <link rel="icon" type="image/x-icon" href="{% static 'videos/img/favicon.ico' %}?v=3">
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
     <link rel="stylesheet" href="{% static 'videos/css/upload.css' %}">
 </head>
 
 <body>
     <header>
-        <h1>Acceso al Sistema ADICLA</h1>
+        <h1 style="text-align: center;">Acceso al Sistema ADICLA Panel de Mercadotecnia ADICLA</h1>
     </header>
 
     <main>
@@ -52,6 +51,20 @@
                     Ingresar
                 </button>
             </form>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'upload_password_reset' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🔑 ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{% url 'landing' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🏠 Regresar a Inicio
+                </a>
+            </div>
             
             <p style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
                 Panel de Mercadotecnia ADICLA
