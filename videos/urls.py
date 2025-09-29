@@ -22,6 +22,11 @@ urlpatterns = [
     path('tareas/login/', views.tareas_login, name='tareas_login'),
     path('tareas/logout/', views.tareas_logout, name='tareas_logout'),
     
+    # Repositorio
+    path('repositorio/', views.repositorio_view, name='repositorio'),
+    path('repositorio/login/', views.repositorio_login, name='repositorio_login'),
+    path('repositorio/logout/', views.repositorio_logout, name='repositorio_logout'),
+    
     # Playlist control
     path('api/playlist/start/', views.start_playlist, name='start_playlist'),
     path('api/playlist/stop/', views.stop_playlist, name='stop_playlist'),

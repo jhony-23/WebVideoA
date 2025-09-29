@@ -1,16 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
+from functools import wraps
 from .models import Media, PlaylistState
 from .forms import MediaForm
 from django.contrib import messages
 from django.utils.timezone import localtime
 import json
 import random
+
+# Decorador personalizado para repositorio
+def repositorio_login_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('repositorio_login')
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 def home(request):
     media_qs = Media.objects.all().order_by('uploaded_at')
@@ -279,3 +290,36 @@ def tareas_dashboard(request):
         'user': request.user,
     }
     return render(request, 'videos/tareas_dashboard.html', context)
+
+@repositorio_login_required
+def repositorio_view(request):
+    """Vista para el sistema de repositorio - requiere login"""
+    return render(request, 'videos/repositorio.html')
+
+def repositorio_login(request):
+    """Vista de login para repositorio"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        # Validar que el email sea de @adicla.org.gt
+        if not email.endswith('@adicla.org.gt'):
+            messages.error(request, 'Solo se permiten usuarios con email @adicla.org.gt')
+            return render(request, 'videos/repositorio_login.html')
+        
+        # Autenticar con email como username
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
+            # Configurar sesión de 8 horas (28800 segundos)
+            request.session.set_expiry(28800)
+            login(request, user)
+            return redirect('repositorio')
+        else:
+            messages.error(request, 'Credenciales inválidas')
+    
+    return render(request, 'videos/repositorio_login.html')
+
+def repositorio_logout(request):
+    """Cerrar sesión de repositorio"""
+    logout(request)
+    return redirect('repositorio_login')

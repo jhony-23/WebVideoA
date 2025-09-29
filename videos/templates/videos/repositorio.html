@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositorio - ADICLA</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'videos/css/repositorio.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>ADICLA</h1>
+                    <span>Repositorio</span>
+                </div>
+                <nav class="nav">
+                    <span class="user-info">👤 {{ user.email }}</span>
+                    <a href="/" class="nav-link">🏠 Inicio</a>
+
+                    <a href="/repositorio/logout/" class="nav-link logout">🚪 Cerrar Sesión</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1>📂 Repositorio</h1>
+                <p>Sistema de gestión de documentos y archivos corporativos</p>
+            </div>
+
+            <div class="content-area">
+                <div class="welcome-card">
+                    <h2>Bienvenido al Repositorio</h2>
+                    <p>Este espacio está diseñado para la gestión centralizada de documentos, archivos y recursos corporativos de ADICLA.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 ADICLA - Asociación para el Desarrollo Integral de las Comunidades</p>
+        </footer>
+    </div>
+</body>
+</html>
