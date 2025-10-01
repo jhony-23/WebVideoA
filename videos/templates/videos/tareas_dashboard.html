@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
+    <meta charset=            
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Gestión de Tareas ADICLA</title>
     {% load static %}
@@ -24,37 +24,146 @@
     <main class="main-content">
         <!-- Welcome Section -->
         <section class="welcome-section">
-            <h1>🎉 ¡Bienvenido al Sistema de Gestión de Tareas!</h1>
-            <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
-            <div class="status-badge">✅ Sistema Activo</div>
+            {% if es_primer_acceso %}
+                <h1>🎉 ¡Bienvenido al Sistema de Gestión de Tareas!</h1>
+                <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
+                <div class="status-badge">🚀 ¡Empecemos a trabajar!</div>
+                <div class="welcome-actions" style="margin-top: 20px;">
+                    <a href="#" class="btn-action">+ Crear mi primer proyecto</a>
+                    <a href="#" class="btn-action-secondary">📚 Ver guía rápida</a>
+                </div>
+            {% else %}
+                <h1>👋 ¡Hola de nuevo, {{ user.first_name|default:user.username }}!</h1>
+                <p>Aquí tienes un resumen de tu actividad en ADICLA</p>
+                <div class="status-badge">✅ Sistema Activo</div>
+            {% endif %}
         </section>
         
         <!-- Quick Stats -->
         <section class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
-                <div class="stat-number">0</div>
-                <div class="stat-label">Tareas Activas</div>
+                <div class="stat-number">{{ total_tareas }}</div>
+                <div class="stat-label">Total Tareas</div>
+                <div class="stat-detail">
+                    <small>{{ tareas_pendientes }} pendientes • {{ tareas_en_proceso }} en proceso</small>
+                </div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-icon">📊</div>
-                <div class="stat-number">0</div>
-                <div class="stat-label">Proyectos</div>
+                <div class="stat-number">{{ total_proyectos }}</div>
+                <div class="stat-label">Mis Proyectos</div>
+                <div class="stat-detail">
+                    <small>{{ proyectos_activos }} activos</small>
+                </div>
+            </div>
+            
+            <div class="stat-card {% if tareas_criticas > 0 %}stat-urgent{% endif %}">
+                <div class="stat-icon">�</div>
+                <div class="stat-number">{{ tareas_criticas }}</div>
+                <div class="stat-label">Tareas Críticas</div>
+                <div class="stat-detail">
+                    <small>{{ tareas_altas }} de alta prioridad</small>
+                </div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-number">1</div>
-                <div class="stat-label">Miembros del Equipo</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">⏰</div>
-                <div class="stat-number">0%</div>
-                <div class="stat-label">Progreso General</div>
+                <div class="stat-icon">✅</div>
+                <div class="stat-number">{{ tareas_completadas }}</div>
+                <div class="stat-label">Completadas</div>
+                <div class="stat-detail">
+                    <small>{% if total_tareas > 0 %}{{ tareas_completadas|floatformat:0 }}/{{ total_tareas }}{% else %}0/0{% endif %}</small>
+                </div>
             </div>
         </section>
+
+        {% if not es_primer_acceso %}
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <div class="dashboard-left">
+                <!-- Proyectos Recientes -->
+                <section class="recent-projects">
+                    <div class="section-header">
+                        <h2 class="section-title">📊 Proyectos Recientes</h2>
+                        <a href="#" class="btn-link">Ver todos</a>
+                    </div>
+                    
+                    {% if proyectos_recientes %}
+                        <div class="projects-list">
+                            {% for proyecto in proyectos_recientes %}
+                            <div class="project-item">
+                                <div class="project-info">
+                                    <div class="project-icon">{{ proyecto.icono }}</div>
+                                    <div class="project-details">
+                                        <h3>{{ proyecto.nombre }}</h3>
+                                        <p>{{ proyecto.codigo }} • Creado {{ proyecto.created_at|timesince }} atrás</p>
+                                        <div class="project-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" data-progress="{{ proyecto.get_progreso }}"></div>
+                                            </div>
+                                            <span class="progress-text">{{ proyecto.get_progreso }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-status">
+                                    <span class="status-badge status-{{ proyecto.estado }}">{{ proyecto.get_estado_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>🎯 ¡Aún no tienes proyectos! Crea tu primer proyecto para empezar.</p>
+                            <a href="#" class="btn-action">+ Crear Proyecto</a>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+            
+            <div class="dashboard-right">
+                <!-- Tareas Próximas a Vencer -->
+                <section class="upcoming-tasks">
+                    <div class="section-header">
+                        <h2 class="section-title">⏰ Próximas a Vencer</h2>
+                        <a href="#" class="btn-link">Ver todas</a>
+                    </div>
+                    
+                    {% if tareas_proximas %}
+                        <div class="tasks-list">
+                            {% for tarea in tareas_proximas %}
+                            <div class="task-item">
+                                <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                                <div class="task-info">
+                                    <h4>{{ tarea.titulo }}</h4>
+                                    <p>{{ tarea.proyecto.nombre }}</p>
+                                    <div class="task-meta">
+                                        {% if tarea.fecha_vencimiento %}
+                                            <span class="task-date">
+                                                {% if tarea.esta_vencida %}
+                                                    🚨 Vencida hace {{ tarea.fecha_vencimiento|timesince }}
+                                                {% else %}
+                                                    📅 Vence {{ tarea.fecha_vencimiento|timeuntil }}
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="task-status">
+                                    <span class="status-badge status-{{ tarea.estado }}">{{ tarea.get_estado_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>🎉 ¡No tienes tareas próximas a vencer!</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Features Section -->
         <section class="features-section">
@@ -108,5 +217,17 @@
             </div>
         </section>
     </main>
+
+    <script>
+        // Script para manejar las barras de progreso
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill[data-progress]');
+            
+            progressBars.forEach(function(bar) {
+                const progress = bar.getAttribute('data-progress');
+                bar.style.width = progress + '%';
+            });
+        });
+    </script>
 </body>
 </html>

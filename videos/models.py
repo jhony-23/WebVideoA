@@ -6,6 +6,7 @@ import os
 import json
 from django.conf import settings
 from django.utils import timezone
+from django.urls import reverse
 
 class PlaylistState(models.Model):
     """Estado global de la reproducción sincronizada"""
@@ -191,3 +192,266 @@ def delete_old_file_on_update(sender, instance, **kwargs):
 def delete_file_on_delete(sender, instance, **kwargs):
     if instance.file:
         instance.file.delete(False)
+
+
+# ==================== MODELOS PARA GESTIÓN DE TAREAS ====================
+
+class PerfilUsuario(models.Model):
+    """Extensión del modelo User para información adicional"""
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    foto = models.ImageField(upload_to='perfiles/', blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    departamento = models.CharField(max_length=100, blank=True)
+    puesto = models.CharField(max_length=100, blank=True)
+    habilidades = models.TextField(blank=True, help_text="Separar habilidades con comas")
+    bio = models.TextField(blank=True, max_length=500)
+    fecha_ingreso = models.DateField(null=True, blank=True)
+    configuracion_notificaciones = models.JSONField(default=dict, blank=True)
+    
+    # Preferencias
+    tema_preferido = models.CharField(
+        max_length=20, 
+        choices=[('light', 'Claro'), ('dark', 'Oscuro')], 
+        default='light'
+    )
+    idioma = models.CharField(max_length=10, default='es')
+    zona_horaria = models.CharField(max_length=50, default='America/Guatemala')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'perfil_usuario'
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuario'
+    
+    def __str__(self):
+        return f"Perfil de {self.usuario.get_full_name() or self.usuario.username}"
+    
+    def get_habilidades_list(self):
+        """Retorna lista de habilidades"""
+        if self.habilidades:
+            return [h.strip() for h in self.habilidades.split(',') if h.strip()]
+        return []
+
+
+class Proyecto(models.Model):
+    """Modelo para gestión de proyectos"""
+    ESTADOS_PROYECTO = [
+        ('activo', 'Activo'),
+        ('pausado', 'Pausado'),
+        ('completado', 'Completado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    TIPOS_VISIBILIDAD = [
+        ('publico', 'Público'),
+        ('privado', 'Privado'),
+    ]
+    
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    codigo = models.CharField(max_length=20, unique=True, help_text="Código único del proyecto")
+    
+    # Fechas
+    fecha_inicio = models.DateField()
+    fecha_fin_estimada = models.DateField(null=True, blank=True)
+    fecha_fin_real = models.DateField(null=True, blank=True)
+    
+    # Estado y visibilidad
+    estado = models.CharField(max_length=20, choices=ESTADOS_PROYECTO, default='activo')
+    visibilidad = models.CharField(max_length=20, choices=TIPOS_VISIBILIDAD, default='privado')
+    
+    # Usuario que creó el proyecto (automáticamente admin del proyecto)
+    creador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proyectos_creados')
+    
+    # Configuración
+    color = models.CharField(max_length=7, default='#3498db', help_text="Color en formato hex")
+    icono = models.CharField(max_length=50, default='📋', help_text="Emoji o icono")
+    
+    # Metadatos
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'proyecto'
+        verbose_name = 'Proyecto'
+        verbose_name_plural = 'Proyectos'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+    
+    def get_absolute_url(self):
+        return reverse('proyecto_detalle', kwargs={'pk': self.pk})
+    
+    def get_progreso(self):
+        """Calcula el progreso del proyecto basado en tareas completadas"""
+        total_tareas = self.tareas.count()
+        if total_tareas == 0:
+            return 0
+        tareas_completadas = self.tareas.filter(estado='completada').count()
+        return round((tareas_completadas / total_tareas) * 100, 1)
+    
+    def get_total_tareas(self):
+        return self.tareas.count()
+    
+    def get_tareas_completadas(self):
+        return self.tareas.filter(estado='completada').count()
+    
+    def get_tareas_pendientes(self):
+        return self.tareas.exclude(estado='completada').count()
+    
+    def get_miembros(self):
+        """Retorna todos los miembros del proyecto"""
+        return User.objects.filter(
+            models.Q(proyectos_creados=self) |
+            models.Q(miembro_proyectos__proyecto=self)
+        ).distinct()
+    
+    def es_admin(self, usuario):
+        """Verifica si el usuario es administrador del proyecto"""
+        if usuario == self.creador:
+            return True
+        return self.miembros.filter(usuario=usuario, rol='admin').exists()
+    
+    def es_jefe_proyecto(self, usuario):
+        """Verifica si el usuario es jefe del proyecto"""
+        return self.miembros.filter(usuario=usuario, rol='jefe').exists()
+    
+    def puede_gestionar(self, usuario):
+        """Verifica si el usuario puede gestionar el proyecto (admin o jefe)"""
+        return self.es_admin(usuario) or self.es_jefe_proyecto(usuario)
+
+
+class MiembroProyecto(models.Model):
+    """Relación entre usuarios y proyectos con roles específicos"""
+    ROLES = [
+        ('usuario', 'Usuario'),
+        ('jefe', 'Jefe de Proyecto'),
+        ('admin', 'Administrador'),
+    ]
+    
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='miembros')
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='miembro_proyectos')
+    rol = models.CharField(max_length=20, choices=ROLES, default='usuario')
+    
+    # Metadatos
+    fecha_incorporacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'miembro_proyecto'
+        verbose_name = 'Miembro de Proyecto'
+        verbose_name_plural = 'Miembros de Proyecto'
+        unique_together = ['proyecto', 'usuario']
+    
+    def __str__(self):
+        return f"{self.usuario.get_full_name() or self.usuario.username} - {self.proyecto.nombre} ({self.get_rol_display()})"
+
+
+class Tarea(models.Model):
+    """Modelo para gestión de tareas"""
+    ESTADOS_TAREA = [
+        ('pendiente', 'Pendiente'),
+        ('en_proceso', 'En Proceso'),
+        ('en_revision', 'En Revisión'),
+        ('completada', 'Completada'),
+    ]
+    
+    PRIORIDADES = [
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta'),
+        ('critica', 'Crítica'),
+    ]
+    
+    # Información básica
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True)
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='tareas')
+    
+    # Asignación
+    creador = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tareas_creadas')
+    asignados = models.ManyToManyField(User, related_name='tareas_asignadas', blank=True)
+    
+    # Estado y prioridad
+    estado = models.CharField(max_length=20, choices=ESTADOS_TAREA, default='pendiente')
+    prioridad = models.CharField(max_length=20, choices=PRIORIDADES, default='media')
+    
+    # Fechas
+    fecha_vencimiento = models.DateTimeField(null=True, blank=True)
+    fecha_inicio_estimada = models.DateField(null=True, blank=True)
+    fecha_inicio_real = models.DateTimeField(null=True, blank=True)
+    fecha_completada = models.DateTimeField(null=True, blank=True)
+    
+    # Estimaciones
+    tiempo_estimado = models.DurationField(null=True, blank=True, help_text="Tiempo estimado en formato HH:MM:SS")
+    tiempo_real = models.DurationField(null=True, blank=True)
+    
+    # Dependencias
+    dependencias = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='dependientes')
+    
+    # Configuración
+    tags = models.CharField(max_length=500, blank=True, help_text="Etiquetas separadas por comas")
+    
+    # Metadatos
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'tarea'
+        verbose_name = 'Tarea'
+        verbose_name_plural = 'Tareas'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.titulo} - {self.proyecto.codigo}"
+    
+    def get_absolute_url(self):
+        return reverse('tarea_detalle', kwargs={'pk': self.pk})
+    
+    def get_tags_list(self):
+        """Retorna lista de tags"""
+        if self.tags:
+            return [t.strip() for t in self.tags.split(',') if t.strip()]
+        return []
+    
+    def esta_vencida(self):
+        """Verifica si la tarea está vencida"""
+        if self.fecha_vencimiento and self.estado != 'completada':
+            return timezone.now() > self.fecha_vencimiento
+        return False
+    
+    def dias_para_vencimiento(self):
+        """Calcula días hasta el vencimiento"""
+        if self.fecha_vencimiento:
+            delta = self.fecha_vencimiento - timezone.now()
+            return delta.days
+        return None
+    
+    def puede_iniciar(self):
+        """Verifica si la tarea puede iniciarse (dependencias completadas)"""
+        return not self.dependencias.exclude(estado='completada').exists()
+    
+    def get_progreso_dependencias(self):
+        """Calcula progreso de dependencias"""
+        total = self.dependencias.count()
+        if total == 0:
+            return 100
+        completadas = self.dependencias.filter(estado='completada').count()
+        return round((completadas / total) * 100, 1)
+
+
+# Señales para crear perfil automáticamente
+@receiver(models.signals.post_save, sender=User)
+def crear_perfil_usuario(sender, instance, created, **kwargs):
+    """Crear perfil automáticamente al crear usuario"""
+    if created:
+        PerfilUsuario.objects.create(usuario=instance)
+
+@receiver(models.signals.post_save, sender=User)
+def guardar_perfil_usuario(sender, instance, **kwargs):
+    """Guardar perfil cuando se guarda usuario"""
+    if hasattr(instance, 'perfil'):
+        instance.perfil.save()

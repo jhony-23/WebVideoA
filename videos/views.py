@@ -287,8 +287,48 @@ def tareas_dashboard(request):
         messages.error(request, 'Acceso no autorizado')
         return redirect('tareas_login')
     
+    # Importar modelos de tareas
+    from .models import Proyecto, Tarea, MiembroProyecto
+    
+    # Obtener estadísticas del usuario
+    proyectos_creados = Proyecto.objects.filter(creador=request.user)
+    proyectos_como_miembro = Proyecto.objects.filter(miembros__usuario=request.user)
+    todos_mis_proyectos = (proyectos_creados | proyectos_como_miembro).distinct()
+    
+    # Tareas asignadas al usuario
+    mis_tareas = Tarea.objects.filter(asignados=request.user)
+    tareas_pendientes = mis_tareas.filter(estado='pendiente').count()
+    tareas_en_proceso = mis_tareas.filter(estado='en_proceso').count()
+    tareas_completadas = mis_tareas.filter(estado='completada').count()
+    
+    # Tareas por prioridad
+    tareas_criticas = mis_tareas.filter(prioridad='critica').exclude(estado='completada').count()
+    tareas_altas = mis_tareas.filter(prioridad='alta').exclude(estado='completada').count()
+    
+    # Proyectos recientes
+    proyectos_recientes = todos_mis_proyectos.order_by('-updated_at')[:5]
+    
+    # Tareas próximas a vencer (siguientes 7 días)
+    from datetime import datetime, timedelta
+    fecha_limite = timezone.now() + timedelta(days=7)
+    tareas_proximas = mis_tareas.filter(
+        fecha_vencimiento__lte=fecha_limite,
+        fecha_vencimiento__gte=timezone.now()
+    ).exclude(estado='completada').order_by('fecha_vencimiento')[:5]
+    
     context = {
         'user': request.user,
+        'total_proyectos': todos_mis_proyectos.count(),
+        'proyectos_activos': todos_mis_proyectos.filter(estado='activo').count(),
+        'total_tareas': mis_tareas.count(),
+        'tareas_pendientes': tareas_pendientes,
+        'tareas_en_proceso': tareas_en_proceso,
+        'tareas_completadas': tareas_completadas,
+        'tareas_criticas': tareas_criticas,
+        'tareas_altas': tareas_altas,
+        'proyectos_recientes': proyectos_recientes,
+        'tareas_proximas': tareas_proximas,
+        'es_primer_acceso': not todos_mis_proyectos.exists(),
     }
     return render(request, 'videos/tareas_dashboard.html', context)
 
