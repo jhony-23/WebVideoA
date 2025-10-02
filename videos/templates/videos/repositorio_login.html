@@ -1,100 +1,80 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login con Puestos</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login Repositorio ADICLA</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .login-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-      width: 320px;
-    }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
+    .login-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.15); width: 340px; }
+    h2 { text-align: center; color: #333; margin: 0 0 12px; }
+    input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { background: #0069d9; color: white; font-weight: 700; cursor: pointer; border: none; border-radius: 6px; padding: 10px; }
+    button:hover { filter: brightness(0.95); }
+    p { text-align: center; margin: 10px 0 0; }
+    .info { font-size: 13px; color: #444; text-align: left; margin-top: 12px; background:#f8f9fb; padding:8px; border-radius:6px; }
+    .cred { font-weight:700; word-break: break-all; }
   </style>
 </head>
 <body>
   <div class="login-container">
-    <h2>Login</h2>
+    <h2>Login Repositorio</h2>
     <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario" required>
-      <input type="password" id="password" placeholder="Contraseña" required>
-
+      <input type="text" id="usuario" placeholder="Usuario (email)" required />
+      <input type="password" id="password" placeholder="Contraseña" required />
       <select id="puesto" required>
-        <option value="">Selecciona tu puesto de trabajo</option>
+        <option value="">Selecciona tu puesto</option>
+        <option value="Administrador">Administrador</option>
+        <option value="Técnico">Técnico</option>
+        <option value="Practicante">Practicante</option>
+        <option value="Asesor de Créditos">Asesor de Créditos</option>
       </select>
-
       <button type="submit">Ingresar al Repositorio</button>
     </form>
-    <p id="mensaje" style="color:red; text-align:center;"></p>
+    <p id="mensaje" style="color:red;"></p>
+    <div class="info">
+      Cuentas de prueba para usar localmente:<br/>
+      Practicante: <span class="cred">practicante.tecnologia@adicla.org.gt</span><br/>
+      Contraseña: <span class="cred">practicante123</span><br/><br/>
+      Administrador: <span class="cred">administrador@adicla.org.gt</span><br/>
+      Contraseña: <span class="cred">admin123</span>
+    </div>
   </div>
 
   <script>
-   
-    const puestosBD = [
-      "Gerente General",
-      "Asesor de Créditos",
-      "Supervisor de Agencias",
-      "Secretaria",
-      "Director de Unidad",
-      "Técnico",
-      "Analista",
-      "Supervisor de ganacias",
-      "Jefe de Unidad de Riesgos"
+    const usuarios = [
+      { usuario: "practicante.tecnologia@adicla.org.gt", password: "practicante123", puesto: "Practicante" },
+      { usuario: "administrador@adicla.org.gt", password: "admin123", puesto: "Administrador" }
     ];
 
-    const selectPuesto = document.getElementById("puesto");
-    puestosBD.forEach(p => {
-      const option = document.createElement("option");
-      option.value = p;
-      option.textContent = p;
-      selectPuesto.appendChild(option);
-    });
-
-  
     document.getElementById("loginForm").addEventListener("submit", function(e) {
       e.preventDefault();
-
-      const usuario = document.getElementById("usuario").value;
+      const usuario = document.getElementById("usuario").value.trim();
       const password = document.getElementById("password").value;
       const puesto = document.getElementById("puesto").value;
+      const mensaje = document.getElementById("mensaje");
 
-      if(usuario === "admin" && password === "1234") {
-        document.getElementById("mensaje").style.color = "green";
-        document.getElementById("mensaje").textContent = "✅ Bienvenido  al Repositorio de ADICLA" + usuario + " como " + puesto;
-      } else {
-        document.getElementById("mensaje").style.color = "red";
-        document.getElementById("mensaje").textContent = "❌ Usuario o contraseña incorrectos";
+      if (!usuario || !password || !puesto) {
+        mensaje.style.color = "red";
+        mensaje.textContent = "❌ Completa todos los campos";
+        return;
       }
+
+      const u = usuarios.find(x => x.usuario === usuario && x.password === password);
+      if (!u) {
+        mensaje.style.color = "red";
+        mensaje.textContent = "❌ Usuario o contraseña incorrectos";
+        return;
+      }
+
+      if (u.puesto !== puesto) {
+        mensaje.style.color = "red";
+        mensaje.textContent = `❌ El puesto seleccionado no coincide con la cuenta (${u.puesto})`;
+        return;
+      }
+
+      mensaje.style.color = "green";
+      mensaje.textContent = `✅ Bienvenido ${usuario} como ${puesto}`;
     });
   </script>
 </body>
