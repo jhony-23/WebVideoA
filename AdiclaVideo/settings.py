@@ -58,15 +58,8 @@ WSGI_APPLICATION = 'AdiclaVideo.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'PlataformaVideosA',
-        'HOST': '192.168.56.1', 
-        'PORT': '1433', 
-        'USER': 'vm_user',
-        'PASSWORD': 'Adicla221231',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

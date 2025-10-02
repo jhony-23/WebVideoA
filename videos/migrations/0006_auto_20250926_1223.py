@@ -10,8 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            "ALTER TABLE playlist_state DROP COLUMN IF EXISTS current_index;",
-            reverse_sql=migrations.RunSQL.noop,
-        ),
+        # SQLite no soporta DROP COLUMN IF EXISTS, así que omitimos esta operación para compatibilidad local
     ]
