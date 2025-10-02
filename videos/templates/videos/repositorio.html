@@ -1,131 +1,135 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repositorio de ADICLA</title>
-<style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background-color:#f4f7fb; color:#333; }
-  header { background-color:#003366; color:white; padding:15px 20px; text-align:center; font-size:1.5rem; font-weight:bold; }
-  main { padding:20px; }
-  #uploadForm { background:white; padding:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:20px; }
-  #uploadForm input, #uploadForm textarea { display:block; margin-bottom:10px; width:100%; padding:8px; border:1px solid #ccc; border-radius:5px; }
-  .btn { padding:5px 10px; border:none; border-radius:5px; cursor:pointer; font-size:0.9rem; margin-right:5px; }
-  .btn-danger { background:#cc0000; color:white; }
-  .btn-download { background:#28a745; color:white; }
-  table { width:100%; border-collapse: collapse; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-  th, td { padding:10px; border-bottom:1px solid #ddd; text-align:left; }
-  th { background:#0055aa; color:white; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositorio ADICLA</title>
+    {% load static %}
+    <style>
+        body {
+            background: #f3f4f6;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #1e40af;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .btn-back {
+            background: white;
+            color: #1e40af;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-back:hover {
+            background: #e5e7eb;
+        }
+
+        .welcome {
+            padding: 1rem;
+            background: #e0e7ff;
+            margin: 1rem;
+            border-radius: 10px;
+            color: #1e3a8a;
+        }
+
+        table {
+            width: 90%;
+            margin: 1rem auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #1e40af;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .acciones a {
+            margin-right: 10px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .acciones a.ver { color: #2563eb; }
+        .acciones a.subir { color: #16a34a; }
+        .acciones a.descargar { color: #9333ea; }
+        .acciones a.eliminar { color: #dc2626; }
+    </style>
 </head>
 <body>
-<header>Repositorio ADICLA</header>
-<main>
-<form id="uploadForm">
-  <h2>Subir archivo</h2>
-  <input type="file" id="fileInput" required>
-  <textarea id="fileDescription" placeholder="Descripción del archivo" rows="2" required></textarea>
-  <input type="text" id="fileBranch" placeholder="Rama a la que pertenece" required>
-  <button type="submit" class="btn btn-primary">Subir</button>
-</form>
 
-<h2>Archivos Subidos</h2>
-<table id="filesTable">
-  <thead>
-    <tr>
-      <th>Nombre</th>
-      <th>Descripción</th>
-      <th>Subido por</th>
-      <th>Fecha de modificación</th>
-      <th>Versión</th>
-      <th>Rama</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-</main>
+    <div class="header">
+        <h1>Repositorio de Documentos Propiedad de ADICLA</h1>
+        <a href="{% url 'login' %}" class="btn-back">← Cerrar Sesión</a>
+    </div>
 
-<script>
-const uploadForm = document.getElementById('uploadForm');
-const filesTableBody = document.querySelector('#filesTable tbody');
+    <div class="welcome">
+        Bienvenido <b>{{ usuario.Nombre }}</b> ({{ usuario.Puesto }})  
+    </div>
 
-let filesDB = [];
+    <table>
+        <thead>
+            <tr>
+                <th>Documento</th>
+                <th>Subido por</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documentos %}
+            <tr>
+                <td>{{ doc.nombre }}</td>
+                <td>{{ usuario.Nombre }}</td>
+                <td>{{ doc.fecha }}</td>
+                <td class="acciones">
+                
+                    <a href="{{ doc.url }}" class="ver">👁 Ver</a>
 
-uploadForm.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  const fileInput = document.getElementById('fileInput');
-  const descInput = document.getElementById('fileDescription');
-  const branchInput = document.getElementById('fileBranch');
+                   
+                    {% if usuario.Rol == "Administrador" or usuario.Puesto == "Gerente" or usuario.Puesto == "Director" %}
+                        <a href="{% url 'subir_doc' %}" class="subir">⬆ Subir</a>
+                        <a href="{{ doc.url }}" download class="descargar">⬇ Descargar</a>
+                        <a href="{% url 'eliminar_doc' doc.id %}" class="eliminar">🗑 Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No hay documentos disponibles.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-  if(fileInput.files.length===0 || !descInput.value.trim() || !branchInput.value.trim()) return;
-
-  const file = fileInput.files[0];
-
-
-  const existingFiles = filesDB.filter(f => f.originalName === file.name);
-  const version = existingFiles.length + 1;
-
-
-  const dotIndex = file.name.lastIndexOf('.');
-  const baseName = dotIndex !== -1 ? file.name.substring(0, dotIndex) : file.name;
-  const ext = dotIndex !== -1 ? file.name.substring(dotIndex) : '';
-
-  const newFile = {
-  name: version>1 ? `${baseName}(${version})${ext}` : file.name,
-  originalName: file.name,
-  description: descInput.value.trim(),
-  uploadedBy: '', 
-  date: new Date().toLocaleString(), 
-  version: version,
-  branch: branchInput.value.trim(),
-  fileObject: file
-};
-
-  filesDB.push(newFile);
-  renderFiles();
-  uploadForm.reset();
-});
-
-function renderFiles(){
-  filesTableBody.innerHTML='';
-  filesDB.forEach((f,index)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${f.name}</td>
-      <td>${f.description}</td>
-      <td>${f.uploadedBy || '-'}</td>
-      <td>${f.date || '-'}</td>
-      <td>${f.version}</td>
-      <td>${f.branch}</td>
-      <td>
-        <button class="btn btn-download" onclick="downloadFile(${index})">Descargar</button>
-        <button class="btn btn-danger" onclick="deleteFile(${index})">Eliminar</button>
-      </td>
-    `;
-    filesTableBody.appendChild(tr);
-  });
-}
-
-function deleteFile(index){
-  if(confirm('¿Seguro que deseas eliminar este archivo?')){
-    filesDB.splice(index,1);
-    renderFiles();
-  }
-}
-
-function downloadFile(index){
-  const file=f=>filesDB[index].fileObject;
-  const blob = new Blob([filesDB[index].fileObject], {type: filesDB[index].fileObject.type});
-  const url = URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=filesDB[index].name;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-</script>
 </body>
 </html>

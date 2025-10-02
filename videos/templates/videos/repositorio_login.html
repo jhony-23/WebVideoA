@@ -1,192 +1,101 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Repositorio ADICLA</title>
-    
-    {% load static %}
-    <style>
-
-
-        
-        body {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            font-family: sans-serif;
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 3rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .login-header {
-            margin-bottom: 2rem;
-        }
-
-        .login-header h1 {
-            color: #1e40af;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-header p {
-            color: #6b7280;
-            font-size: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            color: #374151;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Estilo para inputs y el nuevo select */
-        .form-group input,
-        .form-group select { 
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-            /* Para el select */
-            appearance: none; 
-            -webkit-appearance: none;
-            background-color: white;
-            /* Flecha SVG personalizada */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem; /* Espacio para el icono de flecha */
-            cursor: pointer;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #1e40af;
-            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
-        }
-
-        .btn-login {
-            width: 100%;
-            background: #1e40af;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-        }
-
-        .btn-login:hover {
-            background: #1d4ed8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-        }
-
-        .btn-back {
-            color: #6b7280;
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s ease;
-        }
-
-        .btn-back:hover {
-            color: #1e40af;
-        }
-
-        .error-message {
-            background: #fee2e2;
-            color: #dc2626;
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .repo-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login con Puestos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+      width: 320px;
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="repo-icon">📂</div>
-            <h1>Repositorio ADICLA</h1>
-            <p>Acceso al Sistema de Documentos</p>
-        </div>
-        
-        {% if messages %}
-            {% for message in messages %}
-                <div class="error-message">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="email">Email Corporativo:</label>
-                <input type="email" 
-                       id="email" 
-                       name="email" 
-                       placeholder="usuario@adicla.org.gt"
-                       required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Contraseña:</label>
-                <input type="password" 
-                       id="password" 
-                       name="password" 
-                       placeholder="••••••••"
-                       required>
-            </div>
+  <div class="login-container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="usuario" placeholder="Usuario" required>
+      <input type="password" id="password" placeholder="Contraseña" required>
 
-            <div class="form-group">
-                <label for="role">Puesto:</label>
-                <select id="role" name="role" required>
-                    <option value="" disabled selected>Selecciona tu puesto</option>
-                    <option value="administrador">Administrador</option>
-                    <option value="usuario">Usuario</option>
-                </select>
-            </div>
-            
-            <button type="submit" class="btn-login"> 
-                🔐 Iniciar Sesión
-            </button>
-        </form>
-        
-        <a href="/" class="btn-back">
-            ← Volver al Inicio
-        </a>
-    </div>
+      <select id="puesto" required>
+        <option value="">Selecciona tu puesto de trabajo</option>
+      </select>
+
+      <button type="submit">Ingresar al Repositorio</button>
+    </form>
+    <p id="mensaje" style="color:red; text-align:center;"></p>
+  </div>
+
+  <script>
+   
+    const puestosBD = [
+      "Gerente General",
+      "Asesor de Créditos",
+      "Supervisor de Agencias",
+      "Secretaria",
+      "Director de Unidad",
+      "Técnico",
+      "Analista",
+      "Supervisor de ganacias",
+      "Jefe de Unidad de Riesgos"
+    ];
+
+    const selectPuesto = document.getElementById("puesto");
+    puestosBD.forEach(p => {
+      const option = document.createElement("option");
+      option.value = p;
+      option.textContent = p;
+      selectPuesto.appendChild(option);
+    });
+
+  
+    document.getElementById("loginForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const usuario = document.getElementById("usuario").value;
+      const password = document.getElementById("password").value;
+      const puesto = document.getElementById("puesto").value;
+
+      if(usuario === "admin" && password === "1234") {
+        document.getElementById("mensaje").style.color = "green";
+        document.getElementById("mensaje").textContent = "✅ Bienvenido  al Repositorio de ADICLA" + usuario + " como " + puesto;
+      } else {
+        document.getElementById("mensaje").style.color = "red";
+        document.getElementById("mensaje").textContent = "❌ Usuario o contraseña incorrectos";
+      }
+    });
+  </script>
 </body>
-</html>hu
+</html>
