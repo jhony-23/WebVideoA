@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tarea.titulo }} - ADICLA</title>
+    {% load static %}
+    {% load proyecto_tags %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📋 Detalle de Tarea - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Navigation Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <nav class="breadcrumb">
+                    <a href="{% url 'tareas_dashboard' %}">Dashboard</a> &gt;
+                    <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}">{{ tarea.proyecto.nombre }}</a> &gt;
+                    <span>{{ tarea.titulo }}</span>
+                </nav>
+            </div>
+            <div class="actions-right">
+                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-action">✏️ Editar Tarea</a>
+                {% endif %}
+                <a href="{% url 'tareas_lista' %}" class="btn-secondary">📋 Ver Todas</a>
+            </div>
+        </section>
+
+        <!-- Task Detail -->
+        <section class="task-detail-section">
+            <div class="task-detail-container">
+                <!-- Left Column: Main Info -->
+                <div class="task-main-info">
+                    <div class="task-header-detail">
+                        <div class="task-title-group">
+                            <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                            <h1 class="task-title-main">{{ tarea.titulo }}</h1>
+                        </div>
+                        
+                        <div class="task-status-group">
+                            <div class="status-badge status-{{ tarea.estado }}">
+                                {{ tarea.get_estado_display }}
+                            </div>
+                            {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                                <select class="status-change-select" data-task-id="{{ tarea.id }}">
+                                    {% for codigo, nombre in estados_disponibles %}
+                                        <option value="{{ codigo }}" {% if tarea.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="task-project-info">
+                        <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}" class="project-link">
+                            <span class="project-badge-large">{{ tarea.proyecto.icono }} {{ tarea.proyecto.nombre }}</span>
+                        </a>
+                    </div>
+                    
+                    {% if tarea.descripcion %}
+                    <div class="task-description-full">
+                        <h3>📝 Descripción</h3>
+                        <div class="description-content">
+                            {{ tarea.descripcion|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tarea.get_tags_list %}
+                    <div class="task-tags-section">
+                        <h3>🏷️ Etiquetas</h3>
+                        <div class="tags-container">
+                            {% for tag in tarea.get_tags_list %}
+                                <span class="tag-large">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Right Column: Details -->
+                <div class="task-details-sidebar">
+                    <div class="detail-card">
+                        <h3>ℹ️ Información General</h3>
+                        
+                        <div class="detail-item">
+                            <label>👤 Creado por:</label>
+                            <span>{{ tarea.creador.get_full_name|default:tarea.creador.username }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>📅 Fecha de creación:</label>
+                            <span>{{ tarea.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>🔄 Última modificación:</label>
+                            <span>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        
+                        {% if tarea.fecha_vencimiento %}
+                        <div class="detail-item">
+                            <label>⏰ Fecha de vencimiento:</label>
+                            {% if tarea.esta_vencida %}
+                                <span class="text-danger">🚨 {{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }} (Vencida)</span>
+                            {% else %}
+                                <span>{{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="detail-item">
+                            <label>⚡ Prioridad:</label>
+                            <span class="priority-text priority-{{ tarea.prioridad }}">
+                                {{ tarea.get_prioridad_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-card">
+                        <h3>👥 Asignaciones</h3>
+                        
+                        {% if tarea.asignados.exists %}
+                            <div class="assigned-users-list">
+                                {% for asignado in tarea.asignados.all %}
+                                    <div class="assigned-user-item">
+                                        <div class="user-avatar">
+                                            {{ asignado.first_name.0|default:asignado.username.0|upper }}
+                                        </div>
+                                        <div class="user-details">
+                                            <div class="user-name">{{ asignado.get_full_name|default:asignado.username }}</div>
+                                            <div class="user-email">{{ asignado.email }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="no-assignments">
+                                <p>Esta tarea no está asignada a ningún usuario.</p>
+                                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini">Asignar usuarios</a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Progress Section -->
+                    <div class="detail-card">
+                        <h3>📊 Progreso</h3>
+                        
+                        <div class="progress-visual">
+                            {% if tarea.estado == 'pendiente' %}
+                                <div class="progress-circle pending">
+                                    <span>⏳</span>
+                                    <small>Pendiente</small>
+                                </div>
+                            {% elif tarea.estado == 'en_progreso' %}
+                                <div class="progress-circle in-progress">
+                                    <span>⚡</span>
+                                    <small>En Progreso</small>
+                                </div>
+                            {% elif tarea.estado == 'completada' %}
+                                <div class="progress-circle completed">
+                                    <span>✅</span>
+                                    <small>Completada</small>
+                                </div>
+                            {% elif tarea.estado == 'cancelada' %}
+                                <div class="progress-circle cancelled">
+                                    <span>❌</span>
+                                    <small>Cancelada</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="progress-timeline">
+                            <div class="timeline-item {% if tarea.fecha_creacion %}completed{% endif %}">
+                                <div class="timeline-marker">📝</div>
+                                <div class="timeline-content">
+                                    <strong>Tarea creada</strong>
+                                    <small>{{ tarea.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            
+                            {% if tarea.estado == 'en_progreso' or tarea.estado == 'completada' %}
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker">⚡</div>
+                                <div class="timeline-content">
+                                    <strong>En progreso</strong>
+                                    <small>Estado actualizado</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if tarea.estado == 'completada' %}
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker">✅</div>
+                                <div class="timeline-content">
+                                    <strong>Completada</strong>
+                                    <small>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if tarea.estado == 'cancelada' %}
+                            <div class="timeline-item cancelled">
+                                <div class="timeline-marker">❌</div>
+                                <div class="timeline-content">
+                                    <strong>Cancelada</strong>
+                                    <small>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Related Tasks -->
+        {% if tareas_relacionadas %}
+        <section class="related-tasks-section">
+            <h2>🔗 Otras tareas del proyecto</h2>
+            <div class="related-tasks-grid">
+                {% for tarea_rel in tareas_relacionadas %}
+                    <div class="related-task-card">
+                        <div class="task-priority priority-{{ tarea_rel.prioridad }}"></div>
+                        <h4><a href="{% url 'tarea_detalle' tarea_rel.pk %}">{{ tarea_rel.titulo }}</a></h4>
+                        <div class="task-status status-{{ tarea_rel.estado }}">{{ tarea_rel.get_estado_display }}</div>
+                        {% if tarea_rel.fecha_vencimiento %}
+                            <small>📅 {{ tarea_rel.fecha_vencimiento|date:"d/m" }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <script>
+        // Script para cambiar estado de la tarea
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.querySelector('.status-change-select');
+            
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const newStatus = this.value;
+                    
+                    fetch(`/tareas/tarea/${taskId}/estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken')
+                        },
+                        body: `estado=${newStatus}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar la página para mostrar los cambios
+                            location.reload();
+                        } else {
+                            alert('Error al cambiar el estado: ' + (data.error || 'Error desconocido'));
+                            // Revertir la selección
+                            this.selectedIndex = 0;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión');
+                        this.selectedIndex = 0;
+                    });
+                });
+            }
+        });
+        
+        // Función para obtener el token CSRF de las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

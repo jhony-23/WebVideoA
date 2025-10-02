@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tareas - ADICLA</title>
+    {% load static %}
+    {% load proyecto_tags %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📋 Mis Tareas - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Actions Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <h1>📋 Gestión de Tareas</h1>
+                <p>Administra todas tus tareas asignadas y creadas</p>
+            </div>
+            <div class="actions-right">
+                <a href="{% url 'tarea_crear' %}" class="btn-action">➕ Nueva Tarea</a>
+                <a href="{% url 'proyectos_lista' %}" class="btn-secondary">📊 Ver Proyectos</a>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters-section">
+            <form method="get" class="filters-form">
+                <div class="filter-group">
+                    <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Buscar tareas..." class="search-input">
+                </div>
+                <div class="filter-group">
+                    <select name="estado" class="filter-select">
+                        <option value="">Todos los estados</option>
+                        {% for codigo, nombre in estados_disponibles %}
+                            <option value="{{ codigo }}" {% if estado_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="prioridad" class="filter-select">
+                        <option value="">Todas las prioridades</option>
+                        {% for codigo, nombre in prioridades_disponibles %}
+                            <option value="{{ codigo }}" {% if prioridad_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="proyecto" class="filter-select">
+                        <option value="">Todos los proyectos</option>
+                        {% for proyecto in proyectos_disponibles %}
+                            <option value="{{ proyecto.pk }}" {% if proyecto_filtro == proyecto.pk|stringformat:"s" %}selected{% endif %}>{{ proyecto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button type="submit" class="btn-filter">Filtrar</button>
+                    {% if busqueda or estado_filtro or prioridad_filtro or proyecto_filtro %}
+                        <a href="{% url 'tareas_lista' %}" class="btn-clear">Limpiar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <!-- Tasks List -->
+        <section class="tasks-section">
+            {% if tareas %}
+                <div class="tasks-kanban">
+                    {% for tarea in tareas %}
+                    <div class="task-card" data-task-id="{{ tarea.id }}">
+                        <div class="task-header">
+                            <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                            <div class="task-actions">
+                                <div class="task-status-dropdown">
+                                    <select class="status-select" data-task-id="{{ tarea.id }}">
+                                        {% for codigo, nombre in estados_disponibles %}
+                                            <option value="{{ codigo }}" {% if tarea.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="task-content">
+                            <h3 class="task-title">
+                                <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a>
+                            </h3>
+                            
+                            <div class="task-project">
+                                <span class="project-badge">{{ tarea.proyecto.icono }} {{ tarea.proyecto.nombre }}</span>
+                            </div>
+                            
+                            {% if tarea.descripcion %}
+                            <div class="task-description">
+                                <p>{{ tarea.descripcion|truncatewords:15 }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="task-meta">
+                                {% if tarea.fecha_vencimiento %}
+                                <div class="task-due">
+                                    {% if tarea.esta_vencida %}
+                                        <span class="due-overdue">🚨 Vencida hace {{ tarea.fecha_vencimiento|timesince }}</span>
+                                    {% else %}
+                                        <span class="due-normal">📅 Vence {{ tarea.fecha_vencimiento|timeuntil }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="task-assigned">
+                                    {% for asignado in tarea.asignados.all %}
+                                        <span class="assigned-user" title="{{ asignado.get_full_name|default:asignado.username }}">
+                                            {{ asignado.first_name.0|default:asignado.username.0|upper }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="no-assigned">Sin asignar</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            {% if tarea.get_tags_list %}
+                            <div class="task-tags">
+                                {% for tag in tarea.get_tags_list %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="task-footer">
+                            <div class="task-actions-buttons">
+                                <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-mini" title="Ver detalle">👁️</a>
+                                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini" title="Editar">✏️</a>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="task-creator">
+                                <small>Por {{ tarea.creador.first_name|default:tarea.creador.username }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No hay tareas</h3>
+                    {% if busqueda or estado_filtro or prioridad_filtro or proyecto_filtro %}
+                        <p>No se encontraron tareas con los filtros aplicados.</p>
+                        <a href="{% url 'tareas_lista' %}" class="btn-action">Ver todas las tareas</a>
+                    {% else %}
+                        <p>¡Aún no tienes tareas! Crea tu primera tarea para empezar.</p>
+                        <a href="{% url 'tarea_crear' %}" class="btn-action">➕ Crear mi primera tarea</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        // Script para cambiar estados de tareas vía AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelects = document.querySelectorAll('.status-select');
+            
+            statusSelects.forEach(function(select) {
+                select.addEventListener('change', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const newStatus = this.value;
+                    
+                    fetch(`/tareas/tarea/${taskId}/estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken')
+                        },
+                        body: `estado=${newStatus}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mostrar confirmación visual
+                            const card = document.querySelector(`[data-task-id="${taskId}"]`);
+                            card.style.transform = 'scale(1.05)';
+                            setTimeout(() => {
+                                card.style.transform = 'scale(1)';
+                            }, 200);
+                        } else {
+                            alert('Error al cambiar el estado: ' + (data.error || 'Error desconocido'));
+                            // Revertir la selección
+                            this.selectedIndex = 0;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión');
+                        this.selectedIndex = 0;
+                    });
+                });
+            });
+        });
+        
+        // Función para obtener el token CSRF de las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

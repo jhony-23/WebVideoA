@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset=            
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Gestión de Tareas ADICLA</title>
     {% load static %}
@@ -29,8 +29,8 @@
                 <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
                 <div class="status-badge">🚀 ¡Empecemos a trabajar!</div>
                 <div class="welcome-actions" style="margin-top: 20px;">
-                    <a href="#" class="btn-action">+ Crear mi primer proyecto</a>
-                    <a href="#" class="btn-action-secondary">📚 Ver guía rápida</a>
+                    <a href="{% url 'proyecto_crear' %}" class="btn-action">+ Crear mi primer proyecto</a>
+                    <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📚 Ver proyectos</a>
                 </div>
             {% else %}
                 <h1>👋 ¡Hola de nuevo, {{ user.first_name|default:user.username }}!</h1>
@@ -86,7 +86,7 @@
                 <section class="recent-projects">
                     <div class="section-header">
                         <h2 class="section-title">📊 Proyectos Recientes</h2>
-                        <a href="#" class="btn-link">Ver todos</a>
+                        <a href="{% url 'proyectos_lista' %}" class="btn-link">Ver todos</a>
                     </div>
                     
                     {% if proyectos_recientes %}
@@ -115,7 +115,7 @@
                     {% else %}
                         <div class="empty-state">
                             <p>🎯 ¡Aún no tienes proyectos! Crea tu primer proyecto para empezar.</p>
-                            <a href="#" class="btn-action">+ Crear Proyecto</a>
+                            <a href="{% url 'proyecto_crear' %}" class="btn-action">+ Crear Proyecto</a>
                         </div>
                     {% endif %}
                 </section>
@@ -126,7 +126,7 @@
                 <section class="upcoming-tasks">
                     <div class="section-header">
                         <h2 class="section-title">⏰ Próximas a Vencer</h2>
-                        <a href="#" class="btn-link">Ver todas</a>
+                        <a href="{% url 'tareas_lista' %}" class="btn-link">Ver todas</a>
                     </div>
                     
                     {% if tareas_proximas %}

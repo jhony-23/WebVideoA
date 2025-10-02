@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if tarea %}Editar{% else %}Crear{% endif %} Tarea - ADICLA</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📝 {% if tarea %}Editar{% else %}Crear{% endif %} Tarea - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Navigation Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <nav class="breadcrumb">
+                    <a href="{% url 'tareas_dashboard' %}">Dashboard</a> &gt;
+                    <a href="{% url 'tareas_lista' %}">Tareas</a> &gt;
+                    {% if tarea %}
+                        <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a> &gt;
+                        <span>Editar</span>
+                    {% else %}
+                        <span>Nueva Tarea</span>
+                    {% endif %}
+                </nav>
+            </div>
+            <div class="actions-right">
+                {% if tarea %}
+                    <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-secondary">👁️ Ver Detalle</a>
+                {% endif %}
+                <a href="{% url 'tareas_lista' %}" class="btn-secondary">📋 Ver Todas</a>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section">
+            <div class="form-container">
+                <div class="form-header">
+                    <h1>
+                        {% if tarea %}
+                            ✏️ Editar Tarea: {{ tarea.titulo }}
+                        {% else %}
+                            ➕ Crear Nueva Tarea
+                        {% endif %}
+                    </h1>
+                    <p>
+                        {% if tarea %}
+                            Modifica los detalles de la tarea existente
+                        {% else %}
+                            Completa la información para crear una nueva tarea
+                        {% endif %}
+                    </p>
+                </div>
+
+                <form method="post" class="task-form" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                <div class="error-message">❌ {{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="form-grid">
+                        <!-- Left Column: Basic Info -->
+                        <div class="form-column">
+                            <div class="form-group">
+                                <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                    📝 Título de la Tarea <span class="required">*</span>
+                                </label>
+                                {{ form.titulo }}
+                                {% if form.titulo.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.titulo.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Nombre descriptivo para la tarea</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                    📄 Descripción
+                                </label>
+                                {{ form.descripcion }}
+                                {% if form.descripcion.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.descripcion.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Descripción detallada de la tarea (opcional)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                    📊 Proyecto <span class="required">*</span>
+                                </label>
+                                {{ form.proyecto }}
+                                {% if form.proyecto.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.proyecto.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Selecciona el proyecto al que pertenece la tarea</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.asignados.id_for_label }}" class="form-label">
+                                    👥 Usuarios Asignados
+                                </label>
+                                {{ form.asignados }}
+                                {% if form.asignados.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.asignados.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Selecciona los usuarios responsables de esta tarea (Ctrl+clic para múltiples)</small>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Details -->
+                        <div class="form-column">
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                        🔄 Estado <span class="required">*</span>
+                                    </label>
+                                    {{ form.estado }}
+                                    {% if form.estado.errors %}
+                                        <div class="field-errors">
+                                            {% for error in form.estado.errors %}
+                                                <small class="error-text">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group half">
+                                    <label for="{{ form.prioridad.id_for_label }}" class="form-label">
+                                        ⚡ Prioridad <span class="required">*</span>
+                                    </label>
+                                    {{ form.prioridad }}
+                                    {% if form.prioridad.errors %}
+                                        <div class="field-errors">
+                                            {% for error in form.prioridad.errors %}
+                                                <small class="error-text">{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">
+                                    📅 Fecha de Vencimiento
+                                </label>
+                                {{ form.fecha_vencimiento }}
+                                {% if form.fecha_vencimiento.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.fecha_vencimiento.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Fecha límite para completar la tarea (opcional)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.tags.id_for_label }}" class="form-label">
+                                    🏷️ Etiquetas
+                                </label>
+                                {{ form.tags }}
+                                {% if form.tags.errors %}
+                                    <div class="field-errors">
+                                        {% for error in form.tags.errors %}
+                                            <small class="error-text">{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-help">Etiquetas separadas por comas (ej: urgente, cliente, desarrollo)</small>
+                            </div>
+
+                            <!-- Preview Section -->
+                            {% if tarea %}
+                            <div class="form-group">
+                                <label class="form-label">ℹ️ Información de la Tarea</label>
+                                <div class="task-info-preview">
+                                    <div class="info-item">
+                                        <strong>Creada por:</strong> {{ tarea.creador.get_full_name|default:tarea.creador.username }}
+                                    </div>
+                                    <div class="info-item">
+                                        <strong>Fecha de creación:</strong> {{ tarea.fecha_creacion|date:"d/m/Y H:i" }}
+                                    </div>
+                                    <div class="info-item">
+                                        <strong>Última modificación:</strong> {{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            {% if tarea %}
+                                💾 Guardar Cambios
+                            {% else %}
+                                ✨ Crear Tarea
+                            {% endif %}
+                        </button>
+                        
+                        <button type="button" class="btn-secondary" onclick="history.back()">
+                            ↩️ Cancelar
+                        </button>
+                        
+                        {% if tarea %}
+                            <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-outline">
+                                👁️ Ver Tarea
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Help Section -->
+        <section class="help-section">
+            <div class="help-container">
+                <h3>💡 Consejos para crear tareas efectivas</h3>
+                <div class="help-grid">
+                    <div class="help-item">
+                        <h4>📝 Título claro</h4>
+                        <p>Usa títulos descriptivos que expliquen claramente qué se debe hacer</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>⚡ Prioridad correcta</h4>
+                        <p>Asigna prioridades basadas en urgencia e importancia del trabajo</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>👥 Asignaciones claras</h4>
+                        <p>Asigna responsables específicos para evitar confusión</p>
+                    </div>
+                    <div class="help-item">
+                        <h4>📅 Fechas realistas</h4>
+                        <p>Establece fechas de vencimiento alcanzables y realistas</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar el campo de fecha para que tenga formato correcto
+            const fechaInput = document.querySelector('input[type="datetime-local"]');
+            if (fechaInput && !fechaInput.value) {
+                // Establecer fecha mínima como hoy
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
+                fechaInput.min = localISOTime;
+            }
+            
+            // Mejorar la experiencia del selector múltiple
+            const asignadosSelect = document.querySelector('select[multiple]');
+            if (asignadosSelect) {
+                asignadosSelect.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    const option = e.target;
+                    if (option.tagName === 'OPTION') {
+                        option.selected = !option.selected;
+                        return false;
+                    }
+                });
+            }
+            
+            // Validación del formulario
+            const form = document.querySelector('.task-form');
+            form.addEventListener('submit', function(e) {
+                const titulo = document.querySelector('#id_titulo').value.trim();
+                const proyecto = document.querySelector('#id_proyecto').value;
+                
+                if (!titulo) {
+                    e.preventDefault();
+                    alert('❌ El título de la tarea es obligatorio');
+                    document.querySelector('#id_titulo').focus();
+                    return false;
+                }
+                
+                if (!proyecto) {
+                    e.preventDefault();
+                    alert('❌ Debes seleccionar un proyecto');
+                    document.querySelector('#id_proyecto').focus();
+                    return false;
+                }
+                
+                // Mostrar indicador de carga
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Guardando...';
+            });
+        });
+    </script>
+</body>
+</html>

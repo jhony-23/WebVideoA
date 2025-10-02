@@ -17,10 +17,25 @@ urlpatterns = [
     path('edit/<int:media_id>/', views.edit_media, name='edit_media'),
     path('delete/<int:media_id>/', views.delete_media, name='delete_media'),
     
-    # Gestión de Tareas
+    # Gestión de Tareas - Dashboard y Auth
     path('tareas/', views.tareas_dashboard, name='tareas_dashboard'),
     path('tareas/login/', views.tareas_login, name='tareas_login'),
     path('tareas/logout/', views.tareas_logout, name='tareas_logout'),
+    
+    # Gestión de Proyectos
+    path('tareas/proyectos/', views.proyectos_lista, name='proyectos_lista'),
+    path('tareas/proyectos/crear/', views.proyecto_crear, name='proyecto_crear'),
+    path('tareas/proyectos/<int:pk>/', views.proyecto_detalle, name='proyecto_detalle'),
+    path('tareas/proyectos/<int:pk>/editar/', views.proyecto_editar, name='proyecto_editar'),
+    path('tareas/proyectos/<int:pk>/eliminar/', views.proyecto_eliminar, name='proyecto_eliminar'),
+    
+    # Gestión de Tareas
+    path('tareas/mis-tareas/', views.tareas_lista, name='tareas_lista'),
+    path('tareas/crear/', views.tarea_crear, name='tarea_crear'),
+    path('tareas/crear/<int:proyecto_pk>/', views.tarea_crear, name='tarea_crear_proyecto'),
+    path('tareas/tarea/<int:tarea_id>/', views.tarea_detalle, name='tarea_detalle'),
+    path('tareas/tarea/<int:tarea_id>/editar/', views.tarea_editar, name='tarea_editar'),
+    path('tareas/tarea/<int:tarea_id>/estado/', views.tarea_cambiar_estado, name='tarea_cambiar_estado'),
     
     # Repositorio
     path('repositorio/', views.repositorio_view, name='repositorio'),
