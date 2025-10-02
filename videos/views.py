@@ -234,7 +234,7 @@ def tareas_lista(request):
     # Obtener todas las tareas donde el usuario está involucrado
     tareas = Tarea.objects.filter(
         Q(creador=request.user) | Q(asignados=request.user)
-    ).distinct().order_by('-fecha_creacion')
+    ).distinct().order_by('-created_at')
     
     # Filtros
     busqueda = request.GET.get('q', '')
@@ -258,11 +258,11 @@ def tareas_lista(request):
     
     # Datos para los filtros
     proyectos_disponibles = Proyecto.objects.filter(
-        Q(creador=request.user) | Q(miembros=request.user)
+        Q(creador=request.user) | Q(miembros__usuario=request.user)
     ).distinct()
     
-    estados_disponibles = Tarea.ESTADO_CHOICES
-    prioridades_disponibles = Tarea.PRIORIDAD_CHOICES
+    estados_disponibles = Tarea.ESTADOS_TAREA
+    prioridades_disponibles = Tarea.PRIORIDADES
     
     context = {
         'tareas': tareas,
@@ -292,12 +292,12 @@ def tarea_detalle(request, tarea_id):
     # Obtener tareas relacionadas del mismo proyecto
     tareas_relacionadas = Tarea.objects.filter(
         proyecto=tarea.proyecto
-    ).exclude(id=tarea.id).order_by('-fecha_creacion')[:5]
+    ).exclude(id=tarea.id).order_by('-created_at')[:5]
     
     context = {
         'tarea': tarea,
         'tareas_relacionadas': tareas_relacionadas,
-        'estados_disponibles': Tarea.ESTADO_CHOICES,
+        'estados_disponibles': Tarea.ESTADOS_TAREA,
     }
     
     return render(request, 'videos/tarea_detalle.html', context)
@@ -384,7 +384,7 @@ def tarea_cambiar_estado(request, tarea_id):
         nuevo_estado = request.POST.get('estado')
         
         # Validar que el estado sea válido
-        estados_validos = [choice[0] for choice in Tarea.ESTADO_CHOICES]
+        estados_validos = [choice[0] for choice in Tarea.ESTADOS_TAREA]
         if nuevo_estado not in estados_validos:
             return JsonResponse({
                 'success': False, 
@@ -406,7 +406,31 @@ def tarea_cambiar_estado(request, tarea_id):
             'success': False,
             'error': f'Error interno: {str(e)}'
         })
+
+@tareas_login_required
+def tarea_eliminar(request, tarea_id):
+    """Vista para eliminar una tarea"""
+    tarea = get_object_or_404(Tarea, id=tarea_id)
     
+    # Verificar permisos de eliminación
+    if not (tarea.creador == request.user or tarea.proyecto.puede_gestionar(request.user)):
+        messages.error(request, '❌ No tienes permisos para eliminar esta tarea')
+        return redirect('tarea_detalle', tarea.id)
+    
+    if request.method == 'POST':
+        proyecto_id = tarea.proyecto.id
+        titulo_tarea = tarea.titulo
+        tarea.delete()
+        messages.success(request, f'✅ Tarea "{titulo_tarea}" eliminada exitosamente')
+        return redirect('proyecto_detalle', proyecto_id)
+    
+    context = {
+        'tarea': tarea,
+        'title': f'Eliminar Tarea: {tarea.titulo}',
+    }
+    
+    return render(request, 'videos/tarea_eliminar.html', context)
+
     elapsed = state.get_elapsed_time()
     
     # Determinar duración según tipo
@@ -832,55 +856,5 @@ def proyecto_eliminar(request, pk):
     
     context = {'proyecto': proyecto}
     return render(request, 'videos/proyecto_eliminar.html', context)
-
-# ==================== GESTIÓN DE TAREAS ====================
-
-@tareas_login_required
-def tareas_lista(request):
-    """Lista de todas las tareas del usuario"""
-    from .models import Tarea
-    
-    # Tareas donde el usuario está asignado o es creador
-    mis_tareas = Tarea.objects.filter(
-        models.Q(asignados=request.user) | models.Q(creador=request.user)
-    ).distinct().order_by('-created_at')
-    
-    # Filtros
-    estado_filtro = request.GET.get('estado', '')
-    if estado_filtro:
-        mis_tareas = mis_tareas.filter(estado=estado_filtro)
-    
-    prioridad_filtro = request.GET.get('prioridad', '')
-    if prioridad_filtro:
-        mis_tareas = mis_tareas.filter(prioridad=prioridad_filtro)
-    
-    proyecto_filtro = request.GET.get('proyecto', '')
-    if proyecto_filtro:
-        mis_tareas = mis_tareas.filter(proyecto_id=proyecto_filtro)
-    
-    busqueda = request.GET.get('q', '')
-    if busqueda:
-        mis_tareas = mis_tareas.filter(
-            models.Q(titulo__icontains=busqueda) |
-            models.Q(descripcion__icontains=busqueda)
-        )
-    
-    # Proyectos para el filtro
-    from .models import Proyecto
-    proyectos_usuario = Proyecto.objects.filter(
-        models.Q(creador=request.user) | models.Q(miembros__usuario=request.user)
-    ).distinct()
-    
-    context = {
-        'tareas': mis_tareas,
-        'estado_filtro': estado_filtro,
-        'prioridad_filtro': prioridad_filtro,
-        'proyecto_filtro': proyecto_filtro,
-        'busqueda': busqueda,
-        'estados_disponibles': Tarea.ESTADOS_TAREA,
-        'prioridades_disponibles': Tarea.PRIORIDADES,
-        'proyectos_disponibles': proyectos_usuario,
-    }
-    return render(request, 'videos/tareas_lista.html', context)
 
 # Funciones duplicadas eliminadas - se mantienen las versiones anteriores con tarea_id

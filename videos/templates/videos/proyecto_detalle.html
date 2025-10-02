@@ -211,7 +211,7 @@
                     {% for tarea in tareas %}
                     <div class="table-row">
                         <div class="col-title">
-                            <a href="{% url 'tarea_detalle' tarea.pk %}">{{ tarea.titulo }}</a>
+                            <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a>
                         </div>
                         <div class="col-assigned">
                             {% for asignado in tarea.asignados.all %}
@@ -241,9 +241,9 @@
                             {% endif %}
                         </div>
                         <div class="col-actions">
-                            <a href="{% url 'tarea_detalle' tarea.pk %}" class="btn-mini">👁️</a>
+                            <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-mini">👁️</a>
                             {% if tarea.creador == user or puede_gestionar %}
-                                <a href="{% url 'tarea_editar' tarea.pk %}" class="btn-mini">✏️</a>
+                                <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini">✏️</a>
                             {% endif %}
                         </div>
                     </div>

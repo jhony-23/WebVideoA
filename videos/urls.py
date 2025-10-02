@@ -35,6 +35,7 @@ urlpatterns = [
     path('tareas/crear/<int:proyecto_pk>/', views.tarea_crear, name='tarea_crear_proyecto'),
     path('tareas/tarea/<int:tarea_id>/', views.tarea_detalle, name='tarea_detalle'),
     path('tareas/tarea/<int:tarea_id>/editar/', views.tarea_editar, name='tarea_editar'),
+    path('tareas/tarea/<int:tarea_id>/eliminar/', views.tarea_eliminar, name='tarea_eliminar'),
     path('tareas/tarea/<int:tarea_id>/estado/', views.tarea_cambiar_estado, name='tarea_cambiar_estado'),
     
     # Repositorio
