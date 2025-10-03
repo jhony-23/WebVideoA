@@ -1,81 +1,95 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login Repositorio ADICLA</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
-    .login-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.15); width: 340px; }
-    h2 { text-align: center; color: #333; margin: 0 0 12px; }
-    input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    button { background: #0069d9; color: white; font-weight: 700; cursor: pointer; border: none; border-radius: 6px; padding: 10px; }
-    button:hover { filter: brightness(0.95); }
-    p { text-align: center; margin: 10px 0 0; }
-    .info { font-size: 13px; color: #444; text-align: left; margin-top: 12px; background:#f8f9fb; padding:8px; border-radius:6px; }
-    .cred { font-weight:700; word-break: break-all; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repositorio ADICLA</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f3f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 340px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #003366;
+        }
+
+        .login-container input,
+        .login-container select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: #0056b3; 
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .login-container button:hover {
+            background: #003d80;
+        }
+    </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login Repositorio</h2>
-    <form id="loginForm">
-      <input type="text" id="usuario" placeholder="Usuario (email)" required />
-      <input type="password" id="password" placeholder="Contraseña" required />
-      <select id="puesto" required>
-        <option value="">Selecciona tu puesto</option>
-        <option value="Administrador">Administrador</option>
-        <option value="Técnico">Técnico</option>
-        <option value="Practicante">Practicante</option>
-        <option value="Asesor de Créditos">Asesor de Créditos</option>
-      </select>
-      <button type="submit">Ingresar al Repositorio</button>
-    </form>
-    <p id="mensaje" style="color:red;"></p>
-    <div class="info">
-      Cuentas de prueba para usar localmente:<br/>
-      Practicante: <span class="cred">practicante.tecnologia@adicla.org.gt</span><br/>
-      Contraseña: <span class="cred">practicante123</span><br/><br/>
-      Administrador: <span class="cred">administrador@adicla.org.gt</span><br/>
-      Contraseña: <span class="cred">admin123</span>
+    <div class="login-container">
+        <h2>Repositorio ADICLA</h2>
+        <form method="POST" action="/repositorio/">
+            {% csrf_token %}
+            <input type="text" name="usuario" placeholder="Correo o Usuario" required>
+            <input type="password" name="password" placeholder="Contraseña" required>
+            
+            <select name="puesto" id="puesto" required>
+                <option value="">Seleccione un puesto</option>
+            </select>
+            
+            <button type="submit">Ingresar</button> <nav>repositorio</nav>
+        </form>
     </div>
-  </div>
 
-  <script>
-    const usuarios = [
-      { usuario: "practicante.tecnologia@adicla.org.gt", password: "practicante123", puesto: "Practicante" },
-      { usuario: "administrador@adicla.org.gt", password: "admin123", puesto: "Administrador" }
-    ];
+    <script>
+      
+        const puestosBD = [
+            "Administrador","Gerente General","Asesor de Créditos","Supervisor de Agencias",
+            "Secretaria","Director de Unidad","Técnico","Analista","Supervisor de Ganancias",
+            "Jefe de Unidad de Riesgos","Contador","Auxiliar Contable","Coordinador de Proyectos",
+            "Recepcionista","Gestor de Crédito","Auditor Interno","Encargado de Sistemas",
+            "Encargado de Almacén","Asistente Administrativo","Practicante","Jefe de Talento Humano"
+        ];
 
-    document.getElementById("loginForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const usuario = document.getElementById("usuario").value.trim();
-      const password = document.getElementById("password").value;
-      const puesto = document.getElementById("puesto").value;
-      const mensaje = document.getElementById("mensaje");
-
-      if (!usuario || !password || !puesto) {
-        mensaje.style.color = "red";
-        mensaje.textContent = "❌ Completa todos los campos";
-        return;
-      }
-
-      const u = usuarios.find(x => x.usuario === usuario && x.password === password);
-      if (!u) {
-        mensaje.style.color = "red";
-        mensaje.textContent = "❌ Usuario o contraseña incorrectos";
-        return;
-      }
-
-      if (u.puesto !== puesto) {
-        mensaje.style.color = "red";
-        mensaje.textContent = `❌ El puesto seleccionado no coincide con la cuenta (${u.puesto})`;
-        return;
-      }
-
-      mensaje.style.color = "green";
-      mensaje.textContent = `✅ Bienvenido ${usuario} como ${puesto}`;
-    });
-  </script>
+        const selectPuesto = document.getElementById("puesto");
+        puestosBD.forEach(puesto => {
+            const option = document.createElement("option");
+            option.value = puesto;
+            option.textContent = puesto;
+            selectPuesto.appendChild(option);
+        });
+    </script>
 </body>
 </html>

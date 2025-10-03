@@ -1,135 +1,262 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repositorio ADICLA</title>
-    {% load static %}
-    <style>
-        body {
-            background: #f3f4f6;
-            font-family: sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+<meta charset="UTF-8">
+<title>Repositorio ADICLA</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    margin: 0;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+  }
+  .repo-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    width: 95%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: row; 
+  }
 
-        .header {
-            background: #1e40af;
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  .main-panel {
+    width: 65%; 
+    padding: 10px;
+  }
+ 
+  .preview-panel {
+    width: 35%; 
+    background: #f0f8ff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    resize: horizontal; 
+    overflow: auto;
+    min-width: 200px; 
+    margin-left: 20px; 
+  }
+  h1, h2 { color: #003366; }
+  
 
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
+  .table-scroll-container { 
+    overflow-x: auto;
+    margin-top: 20px;
+  }
 
-        .btn-back {
-            background: white;
-            color: #1e40af;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .btn-back:hover {
-            background: #e5e7eb;
-        }
-
-        .welcome {
-            padding: 1rem;
-            background: #e0e7ff;
-            margin: 1rem;
-            border-radius: 10px;
-            color: #1e3a8a;
-        }
-
-        table {
-            width: 90%;
-            margin: 1rem auto;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        th, td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        th {
-            background: #1e40af;
-            color: white;
-        }
-
-        tr:hover {
-            background: #f9fafb;
-        }
-
-        .acciones a {
-            margin-right: 10px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .acciones a.ver { color: #2563eb; }
-        .acciones a.subir { color: #16a34a; }
-        .acciones a.descargar { color: #9333ea; }
-        .acciones a.eliminar { color: #dc2626; }
-    </style>
+  table {
+    width: 100%;
+    min-width: 700px; 
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    white-space: nowrap; 
+  }
+  th { background: #003366; color: white; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    padding: 6px 12px;
+    margin: 2px;
+    background: #0056b3;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: #003d80; }
+  embed { 
+    width: 100%; 
+    height: 250px; 
+    border-radius: 8px; 
+    margin-top: 10px; 
+    min-height: 180px; 
+  }
+  .upload-section { margin-top: 20px; }
+  .logout { 
+    width: 100%; 
+    padding: 12px; 
+    margin-top: 20px; 
+    background: #003366; 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+  }
+  .preview-info { 
+    font-size: 14px; 
+    color: #003366; 
+    margin-bottom: 10px; 
+  }
+</style>
 </head>
 <body>
+  <div class="repo-container">
 
-    <div class="header">
-        <h1>Repositorio de Documentos Propiedad de ADICLA</h1>
-        <a href="{% url 'login' %}" class="btn-back">← Cerrar Sesión</a>
-    </div>
+    <div class="main-panel"> 
+      <h1>📂 Repositorio ADICLA</h1>
 
-    <div class="welcome">
-        Bienvenido <b>{{ usuario.Nombre }}</b> ({{ usuario.Puesto }})  
-    </div>
+      <div class="upload-section">
+        <h2>Subir Archivo</h2>
+        <input type="text" id="usuario" placeholder="Nombre completo o correo (ej: nombre@empresa.com)">
+        <input type="text" id="rama" placeholder="Rama a la que pertenece">
+        <textarea id="comentario" placeholder="Comentario sobre el archivo"></textarea>
+        <div style="display:flex; align-items:center; margin-top:10px;">
+            <button onclick="document.getElementById('archivo').click()" style="margin-right: 5px;">Seleccionar archivo</button>
+            <span id="file-name">Ningún archivo seleccionado</span>
+            <input type="file" id="archivo" accept="application/pdf" style="display:none;" onchange="updateFileName()">
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Documento</th>
-                <th>Subido por</th>
+        <button onclick="subirArchivo()" style="width: 100%; margin-top: 15px; padding: 10px; background: #28a745;">Subir</button>
+      </div>
+      
+      <div class="table-scroll-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Versión</th>
+                <th>Rama</th>
+                <th>Usuario</th>
+                <th>Comentario</th>
                 <th>Fecha</th>
                 <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for doc in documentos %}
-            <tr>
-                <td>{{ doc.nombre }}</td>
-                <td>{{ usuario.Nombre }}</td>
-                <td>{{ doc.fecha }}</td>
-                <td class="acciones">
-                
-                    <a href="{{ doc.url }}" class="ver">👁 Ver</a>
+              </tr>
+            </thead>
+            <tbody id="tabla-archivos"></tbody>
+          </table>
+      </div>
+      <button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
 
-                   
-                    {% if usuario.Rol == "Administrador" or usuario.Puesto == "Gerente" or usuario.Puesto == "Director" %}
-                        <a href="{% url 'subir_doc' %}" class="subir">⬆ Subir</a>
-                        <a href="{{ doc.url }}" download class="descargar">⬇ Descargar</a>
-                        <a href="{% url 'eliminar_doc' doc.id %}" class="eliminar">🗑 Eliminar</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4">No hay documentos disponibles.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="preview-panel">
+      <h2>Vista Previa</h2>
+      <div class="preview-info" id="preview-info">Seleccione o suba un archivo para ver los detalles y PDF.</div>
+      <embed id="vista-previa" type="application/pdf" src="">
+    </div>
+  </div>
 
+  <script>
+    let db = [];
+
+    function updateFileName() {
+        const file = document.getElementById("archivo").files[0];
+        document.getElementById("file-name").innerText = file ? file.name : "Ningún archivo seleccionado";
+    }
+
+    function mostrarArchivos() {
+      const tabla = document.getElementById("tabla-archivos");
+      tabla.innerHTML = "";
+      [...db].reverse().forEach((archivo, i_reverse) => {
+        const i = db.length - 1 - i_reverse; 
+        
+        tabla.innerHTML += `
+          <tr onclick="mostrarPreview(db[${i}])" style="cursor:pointer;"> 
+            <td>${archivo.nombre_guardado}</td>
+            <td>${archivo.version}</td>
+            <td>${archivo.rama}</td>
+            <td>${archivo.usuario}</td>
+            <td>${archivo.comentario}</td>
+            <td>${archivo.fecha}</td>
+            <td>
+              <button onclick="event.stopPropagation(); descargar(${i})">Descargar</button>
+              <button onclick="event.stopPropagation(); eliminar(${i})">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function subirArchivo() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const rama = document.getElementById("rama").value.trim();
+      const comentario = document.getElementById("comentario").value.trim();
+      const file = document.getElementById("archivo").files[0];
+
+      if(!usuario || !rama || !file) return alert("Complete 'Nombre completo', 'Rama' y seleccione un PDF.");
+
+      let baseName = file.name.replace(/\.[^/.]+$/, "");
+      let ext = file.name.split(".").pop();
+      let existentes = db.filter(f => f.baseName === baseName);
+      let version = existentes.length + 1;
+      let nombre_guardado = version === 1 ? `${baseName}.${ext}` : `${baseName}(${version}).${ext}`;
+
+      const archivoObj = {
+        nombre_archivo: file.name,
+        nombre_guardado,
+        baseName,
+        version,
+        usuario,
+        rama,
+        comentario,
+        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 
+        url: URL.createObjectURL(file)
+      };
+
+      db.push(archivoObj);
+      mostrarArchivos();
+      mostrarPreview(archivoObj);
+
+      document.getElementById("usuario").value = "";
+      document.getElementById("rama").value = "";
+      document.getElementById("comentario").value = "";
+      document.getElementById("archivo").value = "";
+      document.getElementById("file-name").innerText = "Ningún archivo seleccionado";
+    }
+
+    function mostrarPreview(archivo) {
+      document.getElementById("vista-previa").src = archivo.url;
+      document.getElementById("preview-info").innerHTML = `
+        <b>Detalles del Archivo:</b><br>
+        <b>Nombre completo:</b> ${archivo.usuario}<br>
+        <b>Rama:</b> ${archivo.rama}<br>
+        <b>Comentario:</b> ${archivo.comentario}<br>
+        <b>Fecha:</b> ${archivo.fecha}<br>
+        <b>Versión:</b> ${archivo.version}
+      `;
+    }
+
+    function descargar(i){
+      const a = document.createElement("a");
+      a.href = db[i].url;
+      a.download = db[i].nombre_guardado;
+      a.click();
+    }
+
+    function eliminar(i){
+      URL.revokeObjectURL(db[i].url); 
+
+      db.splice(i, 1);
+      mostrarArchivos();
+      document.getElementById("vista-previa").src = "";
+      document.getElementById("preview-info").innerHTML = "Seleccione o suba un archivo para ver los detalles y PDF.";
+    }
+
+    function cerrarSesion(){
+      alert("Sesión cerrada");
+      document.getElementById("usuario").value = "";
+      db.forEach(item => URL.revokeObjectURL(item.url));
+      db = [];
+      mostrarArchivos();
+      document.getElementById("vista-previa").src = "";
+      document.getElementById("preview-info").innerHTML = "Seleccione o suba un archivo para ver los detalles y PDF.";
+    }
+
+    mostrarArchivos();
+  </script>
 </body>
 </html>
