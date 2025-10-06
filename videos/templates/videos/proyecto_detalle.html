@@ -7,6 +7,7 @@
     {% load static %}
     <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
     <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
 </head>
 <body>
     <!-- Header -->
@@ -211,7 +212,7 @@
                     {% for tarea in tareas %}
                     <div class="table-row">
                         <div class="col-title">
-                            <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a>
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}">{{ tarea.titulo }}</a>
                         </div>
                         <div class="col-assigned">
                             {% for asignado in tarea.asignados.all %}
@@ -241,7 +242,7 @@
                             {% endif %}
                         </div>
                         <div class="col-actions">
-                            <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-mini">👁️</a>
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" class="btn-mini">👁️</a>
                             {% if tarea.creador == user or puede_gestionar %}
                                 <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini">✏️</a>
                             {% endif %}
@@ -258,6 +259,157 @@
                 </div>
             {% endif %}
         </section>
+
+        <!-- Archivos del Proyecto -->
+        {% if archivos %}
+        <section class="files-section">
+            <div class="section-header">
+                <h2 class="section-title">📎 Archivos del Proyecto</h2>
+            </div>
+            <div class="files-grid">
+                {% for archivo in archivos %}
+                <div class="file-card">
+                    <div class="file-icon">{{ archivo.get_icono }}</div>
+                    <div class="file-info">
+                        <h4 class="file-name">{{ archivo.nombre_original }}</h4>
+                        <p class="file-details">
+                            {{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}
+                        </p>
+                        <p class="file-uploader">📤 {{ archivo.subido_por.first_name|default:archivo.subido_por.username }}</p>
+                        {% if archivo.descripcion %}
+                            <p class="file-description">{{ archivo.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="file-actions">
+                        <a href="{% url 'archivo_previsualizar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action" target="_blank">👁️</a>
+                        <a href="{% url 'archivo_descargar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action">⬇️</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Comentarios del Proyecto -->
+        <section class="comments-section">
+            <div class="section-header">
+                <h2 class="section-title">💬 Comentarios del Proyecto</h2>
+            </div>
+            
+            <!-- Formulario para nuevo comentario -->
+            <div class="comment-form-container">
+                <form method="post" action="{% url 'comentario_proyecto_crear' proyecto.id %}" enctype="multipart/form-data" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form_comentario.contenido }}
+                    </div>
+                    <div class="form-group file-group">
+                        {{ form_comentario.archivo }}
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">💬 Comentar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de comentarios -->
+            <div class="comments-list">
+                {% for comentario in comentarios %}
+                <div class="comment-thread">
+                    <div class="comment-main">
+                        <div class="comment-avatar">
+                            {{ comentario.autor.first_name.0|default:comentario.autor.username.0|upper }}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ comentario.autor.first_name|default:comentario.autor.username }}</span>
+                                <span class="comment-date">{{ comentario.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="comment-text">
+                                {{ comentario.contenido|linebreaks }}
+                            </div>
+                            
+                            <!-- Archivos adjuntos en comentario -->
+                            {% if comentario.archivos.all %}
+                            <div class="comment-files">
+                                {% for archivo in comentario.archivos.all %}
+                                <div class="comment-file">
+                                    <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">
+                                        {{ archivo.nombre_original }}
+                                    </a>
+                                    <span class="file-size">({{ archivo.get_tamaño_legible }})</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="comment-actions">
+                                <button class="btn-reply" onclick="toggleReplyForm('{{ comentario.id }}')">↩️ Responder</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de respuesta (oculto por defecto) -->
+                    <div class="reply-form-container" id="reply-form-{{ comentario.id }}" style="display: none;">
+                        <form method="post" action="{% url 'comentario_proyecto_crear' proyecto.id %}" enctype="multipart/form-data" class="reply-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="comentario_padre" value="{{ comentario.id }}">
+                            <div class="form-group">
+                                <textarea name="contenido" class="form-control" rows="2" placeholder="Escribe tu respuesta..."></textarea>
+                            </div>
+                            <div class="form-group file-group">
+                                <input type="file" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-comment-small">💬 Responder</button>
+                                <button type="button" class="btn-cancel-small" onclick="toggleReplyForm('{{ comentario.id }}')">❌ Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Respuestas -->
+                    {% for respuesta in comentario.get_respuestas %}
+                    <div class="comment-reply">
+                        <div class="comment-avatar">
+                            {{ respuesta.autor.first_name.0|default:respuesta.autor.username.0|upper }}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ respuesta.autor.first_name|default:respuesta.autor.username }}</span>
+                                <span class="comment-date">{{ respuesta.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="comment-text">
+                                {{ respuesta.contenido|linebreaks }}
+                            </div>
+                            
+                            <!-- Archivos adjuntos en respuesta -->
+                            {% if respuesta.archivos.all %}
+                            <div class="comment-files">
+                                {% for archivo in respuesta.archivos.all %}
+                                <div class="comment-file">
+                                    <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">
+                                        {{ archivo.nombre_original }}
+                                    </a>
+                                    <span class="file-size">({{ archivo.get_tamaño_legible }})</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <div class="empty-comments">
+                    <div class="empty-icon">💬</div>
+                    <h3>No hay comentarios aún</h3>
+                    <p>¡Sé el primero en comentar sobre este proyecto!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
     </main>
 
     <script>
@@ -270,6 +422,43 @@
                 bar.style.width = progress + '%';
             });
         });
+
+        // Script para manejar formularios de respuesta
+        function toggleReplyForm(comentarioId) {
+            const replyForm = document.getElementById('reply-form-' + comentarioId);
+            if (replyForm.style.display === 'none') {
+                replyForm.style.display = 'block';
+                replyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                replyForm.style.display = 'none';
+            }
+        }
     </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

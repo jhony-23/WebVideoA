@@ -443,6 +443,210 @@ class Tarea(models.Model):
         return round((completadas / total) * 100, 1)
 
 
+class ArchivoProyecto(models.Model):
+    """Archivos adjuntos a proyectos"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='archivos')
+    archivo = models.FileField(upload_to='proyectos/archivos/%Y/%m/')
+    nombre_original = models.CharField(max_length=255)
+    descripcion = models.CharField(max_length=500, blank=True)
+    subido_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='archivos_proyecto_subidos')
+    
+    # Metadatos
+    tamaño = models.PositiveIntegerField(help_text="Tamaño en bytes")
+    tipo_archivo = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'archivo_proyecto'
+        verbose_name = 'Archivo de Proyecto'
+        verbose_name_plural = 'Archivos de Proyecto'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.nombre_original} - {self.proyecto.nombre}"
+    
+    def get_tamaño_legible(self):
+        """Convierte bytes a formato legible"""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if self.tamaño < 1024.0:
+                return f"{self.tamaño:.1f} {unit}"
+            self.tamaño /= 1024.0
+        return f"{self.tamaño:.1f} TB"
+    
+    def get_icono(self):
+        """Retorna emoji según tipo de archivo"""
+        if 'image' in self.tipo_archivo.lower():
+            return '🖼️'
+        elif 'pdf' in self.tipo_archivo.lower():
+            return '📄'
+        elif 'word' in self.tipo_archivo.lower() or 'doc' in self.tipo_archivo.lower():
+            return '📝'
+        elif 'excel' in self.tipo_archivo.lower() or 'sheet' in self.tipo_archivo.lower():
+            return '📊'
+        elif 'powerpoint' in self.tipo_archivo.lower() or 'presentation' in self.tipo_archivo.lower():
+            return '📋'
+        else:
+            return '📎'
+
+
+class ArchivoTarea(models.Model):
+    """Archivos adjuntos a tareas"""
+    tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE, related_name='archivos')
+    archivo = models.FileField(upload_to='tareas/archivos/%Y/%m/')
+    nombre_original = models.CharField(max_length=255)
+    descripcion = models.CharField(max_length=500, blank=True)
+    subido_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='archivos_tarea_subidos')
+    
+    # Metadatos
+    tamaño = models.PositiveIntegerField(help_text="Tamaño en bytes")
+    tipo_archivo = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'archivo_tarea'
+        verbose_name = 'Archivo de Tarea'
+        verbose_name_plural = 'Archivos de Tarea'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.nombre_original} - {self.tarea.titulo}"
+    
+    def get_tamaño_legible(self):
+        """Convierte bytes a formato legible"""
+        tamaño = self.tamaño
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if tamaño < 1024.0:
+                return f"{tamaño:.1f} {unit}"
+            tamaño /= 1024.0
+        return f"{tamaño:.1f} TB"
+    
+    def get_icono(self):
+        """Retorna emoji según tipo de archivo"""
+        if 'image' in self.tipo_archivo.lower():
+            return '🖼️'
+        elif 'pdf' in self.tipo_archivo.lower():
+            return '📄'
+        elif 'word' in self.tipo_archivo.lower() or 'doc' in self.tipo_archivo.lower():
+            return '📝'
+        elif 'excel' in self.tipo_archivo.lower() or 'sheet' in self.tipo_archivo.lower():
+            return '📊'
+        elif 'powerpoint' in self.tipo_archivo.lower() or 'presentation' in self.tipo_archivo.lower():
+            return '📋'
+        else:
+            return '📎'
+
+
+class ComentarioProyecto(models.Model):
+    """Comentarios en proyectos"""
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='comentarios')
+    autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comentarios_proyecto')
+    contenido = models.TextField()
+    
+    # Para hilos de comentarios
+    comentario_padre = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='respuestas')
+    
+    # Metadatos
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'comentario_proyecto'
+        verbose_name = 'Comentario de Proyecto'
+        verbose_name_plural = 'Comentarios de Proyecto'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comentario de {self.autor.username} en {self.proyecto.nombre}"
+    
+    def get_respuestas(self):
+        """Obtiene las respuestas ordenadas"""
+        return self.respuestas.all().order_by('created_at')
+    
+    def es_respuesta(self):
+        """Verifica si es una respuesta a otro comentario"""
+        return self.comentario_padre is not None
+
+
+class ComentarioTarea(models.Model):
+    """Comentarios en tareas"""
+    tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE, related_name='comentarios')
+    autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comentarios_tarea')
+    contenido = models.TextField()
+    
+    # Para hilos de comentarios
+    comentario_padre = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='respuestas')
+    
+    # Metadatos
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'comentario_tarea'
+        verbose_name = 'Comentario de Tarea'
+        verbose_name_plural = 'Comentarios de Tarea'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"Comentario de {self.autor.username} en {self.tarea.titulo}"
+    
+    def get_respuestas(self):
+        """Obtiene las respuestas ordenadas"""
+        return self.respuestas.all().order_by('created_at')
+    
+    def es_respuesta(self):
+        """Verifica si es una respuesta a otro comentario"""
+        return self.comentario_padre is not None
+
+
+class ArchivoComentario(models.Model):
+    """Archivos adjuntos a comentarios"""
+    comentario_proyecto = models.ForeignKey(ComentarioProyecto, on_delete=models.CASCADE, null=True, blank=True, related_name='archivos')
+    comentario_tarea = models.ForeignKey(ComentarioTarea, on_delete=models.CASCADE, null=True, blank=True, related_name='archivos')
+    
+    archivo = models.FileField(upload_to='comentarios/archivos/%Y/%m/')
+    nombre_original = models.CharField(max_length=255)
+    subido_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name='archivos_comentario_subidos')
+    
+    # Metadatos
+    tamaño = models.PositiveIntegerField(help_text="Tamaño en bytes")
+    tipo_archivo = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'archivo_comentario'
+        verbose_name = 'Archivo de Comentario'
+        verbose_name_plural = 'Archivos de Comentario'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        if self.comentario_proyecto:
+            return f"{self.nombre_original} - Comentario Proyecto"
+        else:
+            return f"{self.nombre_original} - Comentario Tarea"
+    
+    def get_tamaño_legible(self):
+        """Convierte bytes a formato legible"""
+        tamaño = self.tamaño
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if tamaño < 1024.0:
+                return f"{tamaño:.1f} {unit}"
+            tamaño /= 1024.0
+        return f"{tamaño:.1f} TB"
+    
+    def get_icono(self):
+        """Retorna emoji según tipo de archivo"""
+        if 'image' in self.tipo_archivo.lower():
+            return '🖼️'
+        elif 'pdf' in self.tipo_archivo.lower():
+            return '📄'
+        elif 'word' in self.tipo_archivo.lower() or 'doc' in self.tipo_archivo.lower():
+            return '📝'
+        elif 'excel' in self.tipo_archivo.lower() or 'sheet' in self.tipo_archivo.lower():
+            return '📊'
+        elif 'powerpoint' in self.tipo_archivo.lower() or 'presentation' in self.tipo_archivo.lower():
+            return '📋'
+        else:
+            return '📎'
+
+
 # Señales para crear perfil automáticamente
 @receiver(models.signals.post_save, sender=User)
 def crear_perfil_usuario(sender, instance, created, **kwargs):

@@ -38,6 +38,15 @@ urlpatterns = [
     path('tareas/tarea/<int:tarea_id>/eliminar/', views.tarea_eliminar, name='tarea_eliminar'),
     path('tareas/tarea/<int:tarea_id>/estado/', views.tarea_cambiar_estado, name='tarea_cambiar_estado'),
     
+    # Comentarios
+    path('tareas/proyecto/<int:proyecto_id>/comentario/', views.comentario_proyecto_crear, name='comentario_proyecto_crear'),
+    path('tareas/tarea/<int:tarea_id>/comentario/', views.comentario_tarea_crear, name='comentario_tarea_crear'),
+    
+    # Archivos
+    path('tareas/tarea/<int:tarea_id>/archivo/', views.tarea_archivo_crear, name='tarea_archivo_crear'),
+    path('tareas/archivo/<str:tipo>/<int:archivo_id>/descargar/', views.archivo_descargar, name='archivo_descargar'),
+    path('tareas/archivo/<str:tipo>/<int:archivo_id>/previsualizar/', views.archivo_previsualizar, name='archivo_previsualizar'),
+    
     # Repositorio
     path('repositorio/', views.repositorio_view, name='repositorio'),
     path('repositorio/login/', views.repositorio_login, name='repositorio_login'),

@@ -10,12 +10,22 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 from django.db.models import Q
 from functools import wraps
-from .models import Media, PlaylistState, PerfilUsuario, Proyecto, Tarea, MiembroProyecto
-from .forms import MediaForm, ProyectoForm, TareaForm, MiembroProyectoForm
+from .models import (
+    Media, PlaylistState, PerfilUsuario, Proyecto, Tarea, MiembroProyecto,
+    ArchivoProyecto, ArchivoTarea, ComentarioProyecto, ComentarioTarea, ArchivoComentario
+)
+from .forms import (
+    MediaForm, ProyectoForm, TareaForm, MiembroProyectoForm,
+    ComentarioProyectoForm, ComentarioTareaForm, ArchivoProyectoForm, ArchivoTareaForm
+)
 from django.contrib import messages
 from django.utils.timezone import localtime
+from django.http import Http404, HttpResponse
+from django.core.files.storage import default_storage
 import json
 import random
+import os
+import mimetypes
 
 # Decorador personalizado para repositorio
 def repositorio_login_required(view_func):
@@ -294,9 +304,23 @@ def tarea_detalle(request, tarea_id):
         proyecto=tarea.proyecto
     ).exclude(id=tarea.id).order_by('-created_at')[:5]
     
+    # Comentarios de la tarea (solo comentarios principales, no respuestas)
+    comentarios = tarea.comentarios.filter(comentario_padre=None).order_by('-created_at')
+    
+    # Archivos de la tarea
+    archivos = tarea.archivos.all().order_by('-created_at')
+    
+    # Formularios
+    form_comentario = ComentarioTareaForm()
+    form_archivo = ArchivoTareaForm()
+    
     context = {
         'tarea': tarea,
         'tareas_relacionadas': tareas_relacionadas,
+        'comentarios': comentarios,
+        'archivos': archivos,
+        'form_comentario': form_comentario,
+        'form_archivo': form_archivo,
         'estados_disponibles': Tarea.ESTADOS_TAREA,
     }
     
@@ -315,7 +339,7 @@ def tarea_crear(request, proyecto_pk=None):
             return redirect('proyecto_detalle', proyecto_pk)
     
     if request.method == 'POST':
-        form = TareaForm(request.POST, user=request.user)
+        form = TareaForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             tarea = form.save(commit=False)
             tarea.creador = request.user
@@ -325,8 +349,20 @@ def tarea_crear(request, proyecto_pk=None):
             tarea.save()
             form.save_m2m()  # Guardar relaciones many-to-many
             
+            # Manejar archivo si hay uno
+            archivo = request.FILES.get('archivo')
+            if archivo:
+                ArchivoTarea.objects.create(
+                    tarea=tarea,
+                    archivo=archivo,
+                    nombre_original=archivo.name,
+                    tamaño=archivo.size,
+                    tipo_archivo=archivo.content_type,
+                    subido_por=request.user
+                )
+            
             messages.success(request, f'✅ Tarea "{tarea.titulo}" creada exitosamente')
-            return redirect('tarea_detalle', tarea.id)
+            return redirect('tarea_detalle', tarea_id=tarea.id)
     else:
         form = TareaForm(user=request.user, initial={'proyecto': proyecto} if proyecto else {})
     
@@ -346,14 +382,14 @@ def tarea_editar(request, tarea_id):
     # Verificar permisos de edición
     if not (tarea.creador == request.user or tarea.proyecto.puede_gestionar(request.user)):
         messages.error(request, '❌ No tienes permisos para editar esta tarea')
-        return redirect('tarea_detalle', tarea.id)
+        return redirect('tarea_detalle', tarea_id=tarea.id)
     
     if request.method == 'POST':
         form = TareaForm(request.POST, instance=tarea, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Tarea "{tarea.titulo}" actualizada exitosamente')
-            return redirect('tarea_detalle', tarea.id)
+            return redirect('tarea_detalle', tarea_id=tarea.id)
     else:
         form = TareaForm(instance=tarea, user=request.user)
     
@@ -415,7 +451,7 @@ def tarea_eliminar(request, tarea_id):
     # Verificar permisos de eliminación
     if not (tarea.creador == request.user or tarea.proyecto.puede_gestionar(request.user)):
         messages.error(request, '❌ No tienes permisos para eliminar esta tarea')
-        return redirect('tarea_detalle', tarea.id)
+        return redirect('tarea_detalle', tarea_id=tarea.id)
     
     if request.method == 'POST':
         proyecto_id = tarea.proyecto.id
@@ -752,11 +788,24 @@ def proyecto_crear(request):
     from .forms import ProyectoForm
     
     if request.method == 'POST':
-        form = ProyectoForm(request.POST)
+        form = ProyectoForm(request.POST, request.FILES)
         if form.is_valid():
             proyecto = form.save(commit=False)
             proyecto.creador = request.user
             proyecto.save()
+            
+            # Manejar archivo si hay uno
+            archivo = request.FILES.get('archivo')
+            if archivo:
+                ArchivoProyecto.objects.create(
+                    proyecto=proyecto,
+                    archivo=archivo,
+                    nombre_original=archivo.name,
+                    tamaño=archivo.size,
+                    tipo_archivo=archivo.content_type,
+                    subido_por=request.user
+                )
+            
             messages.success(request, f'✅ Proyecto "{proyecto.nombre}" creado exitosamente!')
             return redirect('proyecto_detalle', pk=proyecto.pk)
     else:
@@ -792,11 +841,23 @@ def proyecto_detalle(request, pk):
     # Miembros del proyecto
     miembros = proyecto.get_miembros()
     
+    # Comentarios del proyecto (solo comentarios principales, no respuestas)
+    comentarios = proyecto.comentarios.filter(comentario_padre=None).order_by('-created_at')
+    
+    # Archivos del proyecto
+    archivos = proyecto.archivos.all().order_by('-created_at')
+    
+    # Formulario para comentarios
+    form_comentario = ComentarioProyectoForm()
+    
     context = {
         'proyecto': proyecto,
         'tareas': tareas,
         'estadisticas': estadisticas,
         'miembros': miembros,
+        'comentarios': comentarios,
+        'archivos': archivos,
+        'form_comentario': form_comentario,
         'es_admin': proyecto.es_admin(request.user),
         'puede_gestionar': proyecto.puede_gestionar(request.user),
     }
@@ -856,5 +917,203 @@ def proyecto_eliminar(request, pk):
     
     context = {'proyecto': proyecto}
     return render(request, 'videos/proyecto_eliminar.html', context)
+
+# ==================== GESTIÓN DE COMENTARIOS ====================
+
+@tareas_login_required
+def comentario_proyecto_crear(request, proyecto_id):
+    """Crear comentario en proyecto"""
+    proyecto = get_object_or_404(Proyecto, id=proyecto_id)
+    
+    # Verificar permisos
+    if not (proyecto.creador == request.user or proyecto.miembros.filter(usuario=request.user).exists()):
+        messages.error(request, '❌ No tienes permisos para comentar en este proyecto')
+        return redirect('proyecto_detalle', proyecto_id)
+    
+    if request.method == 'POST':
+        form = ComentarioProyectoForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Crear comentario
+            comentario = ComentarioProyecto.objects.create(
+                proyecto=proyecto,
+                autor=request.user,
+                contenido=form.cleaned_data['contenido'],
+                comentario_padre_id=form.cleaned_data.get('comentario_padre')
+            )
+            
+            # Manejar archivo si hay uno
+            archivo = request.FILES.get('archivo')
+            if archivo:
+                ArchivoComentario.objects.create(
+                    comentario_proyecto=comentario,
+                    archivo=archivo,
+                    nombre_original=archivo.name,
+                    tamaño=archivo.size,
+                    tipo_archivo=archivo.content_type,
+                    subido_por=request.user
+                )
+            
+            messages.success(request, '✅ Comentario agregado exitosamente')
+            return redirect('proyecto_detalle', proyecto_id)
+    
+    return redirect('proyecto_detalle', proyecto_id)
+
+
+@tareas_login_required
+def comentario_tarea_crear(request, tarea_id):
+    """Crear comentario en tarea"""
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+    
+    # Verificar permisos
+    if not (tarea.creador == request.user or 
+            request.user in tarea.asignados.all() or 
+            tarea.proyecto.puede_gestionar(request.user)):
+        messages.error(request, '❌ No tienes permisos para comentar en esta tarea')
+        return redirect('tarea_detalle', tarea_id=tarea_id)
+    
+    if request.method == 'POST':
+        form = ComentarioTareaForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Crear comentario
+            comentario = ComentarioTarea.objects.create(
+                tarea=tarea,
+                autor=request.user,
+                contenido=form.cleaned_data['contenido'],
+                comentario_padre_id=form.cleaned_data.get('comentario_padre')
+            )
+            
+            # Manejar archivo si hay uno
+            archivo = request.FILES.get('archivo')
+            if archivo:
+                ArchivoComentario.objects.create(
+                    comentario_tarea=comentario,
+                    archivo=archivo,
+                    nombre_original=archivo.name,
+                    tamaño=archivo.size,
+                    tipo_archivo=archivo.content_type,
+                    subido_por=request.user
+                )
+            
+            messages.success(request, '✅ Comentario agregado exitosamente')
+            return redirect('tarea_detalle', tarea_id=tarea_id)
+    
+    return redirect('tarea_detalle', tarea_id=tarea_id)
+
+
+# ==================== GESTIÓN DE ARCHIVOS ====================
+
+@tareas_login_required
+def archivo_descargar(request, tipo, archivo_id):
+    """Descargar archivo"""
+    try:
+        if tipo == 'proyecto':
+            archivo = get_object_or_404(ArchivoProyecto, id=archivo_id)
+            # Verificar permisos del proyecto
+            if not (archivo.proyecto.creador == request.user or 
+                    archivo.proyecto.miembros.filter(usuario=request.user).exists()):
+                raise PermissionDenied
+        elif tipo == 'tarea':
+            archivo = get_object_or_404(ArchivoTarea, id=archivo_id)
+            # Verificar permisos de la tarea
+            if not (archivo.tarea.creador == request.user or 
+                    request.user in archivo.tarea.asignados.all() or 
+                    archivo.tarea.proyecto.puede_gestionar(request.user)):
+                raise PermissionDenied
+        elif tipo == 'comentario':
+            archivo = get_object_or_404(ArchivoComentario, id=archivo_id)
+            # Verificar permisos según el tipo de comentario
+            if archivo.comentario_proyecto:
+                if not (archivo.comentario_proyecto.proyecto.creador == request.user or 
+                        archivo.comentario_proyecto.proyecto.miembros.filter(usuario=request.user).exists()):
+                    raise PermissionDenied
+            elif archivo.comentario_tarea:
+                if not (archivo.comentario_tarea.tarea.creador == request.user or 
+                        request.user in archivo.comentario_tarea.tarea.asignados.all() or 
+                        archivo.comentario_tarea.tarea.proyecto.puede_gestionar(request.user)):
+                    raise PermissionDenied
+        else:
+            raise Http404
+        
+        # Servir archivo
+        response = HttpResponse(archivo.archivo, content_type=archivo.tipo_archivo)
+        response['Content-Disposition'] = f'attachment; filename="{archivo.nombre_original}"'
+        return response
+        
+    except PermissionDenied:
+        messages.error(request, '❌ No tienes permisos para descargar este archivo')
+        return redirect('tareas_dashboard')
+
+
+@tareas_login_required
+def archivo_previsualizar(request, tipo, archivo_id):
+    """Previsualizar archivo (imágenes y PDFs)"""
+    try:
+        if tipo == 'proyecto':
+            archivo = get_object_or_404(ArchivoProyecto, id=archivo_id)
+            # Verificar permisos del proyecto
+            if not (archivo.proyecto.creador == request.user or 
+                    archivo.proyecto.miembros.filter(usuario=request.user).exists()):
+                raise PermissionDenied
+        elif tipo == 'tarea':
+            archivo = get_object_or_404(ArchivoTarea, id=archivo_id)
+            # Verificar permisos de la tarea
+            if not (archivo.tarea.creador == request.user or 
+                    request.user in archivo.tarea.asignados.all() or 
+                    archivo.tarea.proyecto.puede_gestionar(request.user)):
+                raise PermissionDenied
+        elif tipo == 'comentario':
+            archivo = get_object_or_404(ArchivoComentario, id=archivo_id)
+            # Verificar permisos según el tipo de comentario
+            if archivo.comentario_proyecto:
+                if not (archivo.comentario_proyecto.proyecto.creador == request.user or 
+                        archivo.comentario_proyecto.proyecto.miembros.filter(usuario=request.user).exists()):
+                    raise PermissionDenied
+            elif archivo.comentario_tarea:
+                if not (archivo.comentario_tarea.tarea.creador == request.user or 
+                        request.user in archivo.comentario_tarea.tarea.asignados.all() or 
+                        archivo.comentario_tarea.tarea.proyecto.puede_gestionar(request.user)):
+                    raise PermissionDenied
+        else:
+            raise Http404
+        
+        # Solo permitir previsualización de imágenes y PDFs
+        if not ('image' in archivo.tipo_archivo.lower() or 'pdf' in archivo.tipo_archivo.lower()):
+            return archivo_descargar(request, tipo, archivo_id)
+        
+        # Servir archivo para previsualización
+        response = HttpResponse(archivo.archivo, content_type=archivo.tipo_archivo)
+        response['Content-Disposition'] = f'inline; filename="{archivo.nombre_original}"'
+        return response
+        
+    except PermissionDenied:
+        messages.error(request, '❌ No tienes permisos para ver este archivo')
+        return redirect('tareas_dashboard')
+
+
+@tareas_login_required
+def tarea_archivo_crear(request, tarea_id):
+    """Vista para crear un archivo de tarea"""
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+    
+    # Verificar permisos
+    if not (tarea.creador == request.user or 
+            request.user in tarea.asignados.all() or 
+            tarea.proyecto.puede_gestionar(request.user)):
+        messages.error(request, '❌ No tienes permisos para subir archivos a esta tarea')
+        return redirect('tarea_detalle', tarea_id=tarea.id)
+    
+    if request.method == 'POST':
+        form = ArchivoTareaForm(request.POST, request.FILES)
+        if form.is_valid():
+            archivo = form.save(commit=False)
+            archivo.tarea = tarea
+            archivo.subido_por = request.user
+            archivo.save()
+            messages.success(request, f'✅ Archivo "{archivo.nombre}" subido correctamente')
+            return redirect('tarea_detalle', tarea_id=tarea.id)
+        else:
+            messages.error(request, '❌ Error al subir el archivo. Verifica los datos.')
+    
+    return redirect('tarea_detalle', tarea_id=tarea.id)
 
 # Funciones duplicadas eliminadas - se mantienen las versiones anteriores con tarea_id

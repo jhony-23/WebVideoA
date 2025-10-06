@@ -7,6 +7,7 @@
     {% load static %}
     <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
     <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
 </head>
 <body>
     <!-- Header -->
@@ -97,6 +98,17 @@
                                 {% endif %}
                                 {% if form.descripcion.errors %}
                                     <div class="field-errors">{{ form.descripcion.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.archivo.id_for_label }}">🖇️ {{ form.archivo.label|default:'Adjuntar archivo' }}</label>
+                                {{ form.archivo }}
+                                {% if form.archivo.help_text %}
+                                    <small class="help-text">{{ form.archivo.help_text }}</small>
+                                {% endif %}
+                                {% if form.archivo.errors %}
+                                    <div class="field-errors">{{ form.archivo.errors }}</div>
                                 {% endif %}
                             </div>
                         </div>
@@ -201,5 +213,31 @@
             </div>
         </section>
     </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

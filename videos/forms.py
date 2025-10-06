@@ -1,7 +1,10 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import models
-from .models import Media, Proyecto, Tarea, MiembroProyecto
+from .models import (
+    Media, Proyecto, Tarea, MiembroProyecto,
+    ArchivoProyecto, ArchivoTarea, ComentarioProyecto, ComentarioTarea, ArchivoComentario
+)
 
 class CustomClearableFileInput(forms.ClearableFileInput):
     template_with_initial = (
@@ -34,6 +37,17 @@ class MediaForm(forms.ModelForm):
 class ProyectoForm(forms.ModelForm):
     """Formulario para crear y editar proyectos"""
     
+    # Campo adicional para archivos
+    archivo = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Adjuntar archivo (opcional)',
+        help_text='Puedes subir un documento relacionado al proyecto'
+    )
+
     class Meta:
         model = Proyecto
         fields = [
@@ -154,6 +168,17 @@ class TareaForm(forms.ModelForm):
             self.fields['proyecto'].initial = self.proyecto_inicial
             self.fields['proyecto'].widget.attrs['readonly'] = True
     
+    # Campo adicional para archivos
+    archivo = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Adjuntar archivo (opcional)',
+        help_text='Puedes subir un documento relacionado a la tarea'
+    )
+
     class Meta:
         model = Tarea
         fields = [
@@ -270,3 +295,91 @@ class MiembroProyectoForm(forms.ModelForm):
         help_texts = {
             'rol': 'Usuario: Acceso básico. Jefe: Puede gestionar tareas. Admin: Control total',
         }
+
+
+# ==================== FORMULARIOS PARA COMENTARIOS Y ARCHIVOS ====================
+
+class ComentarioProyectoForm(forms.Form):
+    """Formulario para comentarios en proyectos"""
+    contenido = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Escribe tu comentario...',
+        }),
+        label='Comentario'
+    )
+    archivo = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Adjuntar archivo (opcional)'
+    )
+    comentario_padre = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+
+class ComentarioTareaForm(forms.Form):
+    """Formulario para comentarios en tareas"""
+    contenido = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Escribe tu comentario...',
+        }),
+        label='Comentario'
+    )
+    archivo = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Adjuntar archivo (opcional)'
+    )
+    comentario_padre = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+
+class ArchivoProyectoForm(forms.Form):
+    """Formulario para subir archivos a proyectos"""
+    archivo = forms.FileField(
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Seleccionar archivo'
+    )
+    descripcion = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Descripción opcional del archivo...'
+        }),
+        label='Descripción'
+    )
+
+
+class ArchivoTareaForm(forms.Form):
+    """Formulario para subir archivos a tareas"""
+    archivo = forms.FileField(
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
+        }),
+        label='📎 Seleccionar archivo'
+    )
+    descripcion = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Descripción opcional del archivo...'
+        }),
+        label='Descripción'
+    )
