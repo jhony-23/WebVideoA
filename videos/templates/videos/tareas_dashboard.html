@@ -114,7 +114,7 @@
                 <section class="recent-projects">
                     <div class="section-header">
                         <h2 class="section-title">📊 Proyectos Recientes</h2>
-                        <a href="{% url 'proyectos_lista' %}" class="btn-link">Ver todos</a>
+                        <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary" style="margin-left: 50px;">📚 Ver todos</a>
                     </div>
                     
                     {% if proyectos_recientes %}
@@ -152,9 +152,9 @@
             <div class="dashboard-right">
                 <!-- Tareas Próximas a Vencer -->
                 <section class="upcoming-tasks">
-                    <div class="section-header">
+                    <div class="section-header" style="flex-direction: column; align-items: center;">
                         <h2 class="section-title">⏰ Próximas a Vencer</h2>
-                        <a href="{% url 'tareas_lista' %}" class="btn-link">Ver todas</a>
+                        <a href="{% url 'tareas_lista' %}" class="btn-action-secondary" style="margin-top: 10px;">📝 Ver todas</a>
                     </div>
                     
                     {% if tareas_proximas %}
