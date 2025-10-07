@@ -39,7 +39,7 @@
                     <a href="{% url 'tarea_editar' tarea.id %}" class="btn-action">✏️ Editar Tarea</a>
                     <a href="{% url 'tarea_eliminar' tarea.id %}" class="btn-danger">🗑️ Eliminar</a>
                 {% endif %}
-                <a href="{% url 'tareas_lista' %}" class="btn-secondary">📋 Ver Todas</a>
+                <a href="{% url 'tareas_lista' %}" class="btn-action">📋 Ver Todas</a>
             </div>
         </section>
 
@@ -72,6 +72,29 @@
                         <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}" class="project-link">
                             <span class="project-badge-large">{{ tarea.proyecto.icono }} {{ tarea.proyecto.nombre }}</span>
                         </a>
+                    </div>
+
+                    <!-- Información de Fechas -->
+                    <div class="task-dates-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff;">
+                        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">📅 Creada</div>
+                                <div style="font-weight: 600; color: #374151;">{{ tarea.created_at|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.created_at|timesince }}</div>
+                            </div>
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">🔄 Última modificación</div>
+                                <div style="font-weight: 600; color: #374151;">{{ tarea.updated_at|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.updated_at|timesince }}</div>
+                            </div>
+                            {% if tarea.fecha_completada %}
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">✅ Completada</div>
+                                <div style="font-weight: 600; color: #16a34a;">{{ tarea.fecha_completada|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.fecha_completada|timesince }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                     
                     {% if tarea.descripcion %}
@@ -107,12 +130,12 @@
                         
                         <div class="detail-item">
                             <label>📅 Fecha de creación:</label>
-                            <span>{{ tarea.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                            <span>{{ tarea.created_at|date:"d/m/Y H:i" }}</span>
                         </div>
                         
                         <div class="detail-item">
                             <label>🔄 Última modificación:</label>
-                            <span>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</span>
+                            <span>{{ tarea.updated_at|date:"d/m/Y H:i" }}</span>
                         </div>
                         
                         {% if tarea.fecha_vencimiento %}

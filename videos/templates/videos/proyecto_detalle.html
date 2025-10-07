@@ -45,11 +45,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="project-actions-main">
+                <div class="project-actions-main" style="margin-top: 25px; gap: 15px; display: flex; flex-wrap: wrap;">
                     {% if puede_gestionar %}
-                        <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action">✏️ Editar</a>
+                        <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action" style="margin-right: 15px;">✏️ Editar</a>
                         {% if proyecto.creador == user %}
-                            <a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn-danger">🗑️ Eliminar</a>
+                            <a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn-danger" style="margin-right: 15px;">🗑️ Eliminar</a>
                         {% endif %}
                     {% endif %}
                     <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action">➕ Nueva Tarea</a>
@@ -58,12 +58,12 @@
         </section>
 
         <!-- Project Info Grid -->
-        <div class="detail-grid">
+        <div class="detail-grid" style="margin-top: -125px;">
             <div class="detail-left">
                 <!-- Project Description -->
                 <section class="detail-section">
                     <h2 class="section-title">📋 Descripción del Proyecto</h2>
-                    <div class="description-content">
+                    <div class="description-content" style="text-align: center;">
                         {% if proyecto.descripcion %}
                             <p>{{ proyecto.descripcion|linebreaks }}</p>
                         {% else %}
@@ -73,31 +73,31 @@
                 </section>
 
                 <!-- Project Statistics -->
-                <section class="detail-section">
+                <section class="detail-section" style="margin-top: -100px;">
                     <h2 class="section-title">📊 Estadísticas del Proyecto</h2>
-                    <div class="stats-grid-detail">
-                        <div class="stat-card-detail">
+                    <div class="stats-grid-detail" style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
                             <div class="stat-icon">📋</div>
                             <div class="stat-info">
                                 <div class="stat-number">{{ estadisticas.total_tareas }}</div>
                                 <div class="stat-label">Total Tareas</div>
                             </div>
                         </div>
-                        <div class="stat-card-detail">
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
                             <div class="stat-icon">⏳</div>
                             <div class="stat-info">
                                 <div class="stat-number">{{ estadisticas.tareas_pendientes }}</div>
                                 <div class="stat-label">Pendientes</div>
                             </div>
                         </div>
-                        <div class="stat-card-detail">
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
                             <div class="stat-icon">🔄</div>
                             <div class="stat-info">
                                 <div class="stat-number">{{ estadisticas.tareas_en_proceso }}</div>
                                 <div class="stat-label">En Proceso</div>
                             </div>
                         </div>
-                        <div class="stat-card-detail">
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
                             <div class="stat-icon">✅</div>
                             <div class="stat-info">
                                 <div class="stat-number">{{ estadisticas.tareas_completadas }}</div>
@@ -107,7 +107,7 @@
                     </div>
                     
                     <!-- Progress Bar -->
-                    <div class="progress-section">
+                    <div class="progress-section" style="margin-top: 50px;">
                         <div class="progress-info">
                             <span class="progress-label">Progreso General</span>
                             <span class="progress-text">{{ estadisticas.progreso }}%</span>
@@ -119,9 +119,9 @@
                 </section>
 
                 <!-- Project Details -->
-                <section class="detail-section">
+                <section class="detail-section" style="margin-top: -100px;">
                     <h2 class="section-title">📅 Información del Proyecto</h2>
-                    <div class="info-grid">
+                    <div class="info-grid" style="text-align: center;">
                         <div class="info-item">
                             <span class="info-label">Fecha de Inicio:</span>
                             <span class="info-value">{{ proyecto.fecha_inicio|date:"d/m/Y" }}</span>
@@ -150,9 +150,9 @@
 
             <div class="detail-right">
                 <!-- Team Members -->
-                <section class="detail-section">
+                <section class="detail-section" style="margin-top: -100px;">
                     <h2 class="section-title">👥 Miembros del Equipo</h2>
-                    <div class="members-list">
+                    <div class="members-list" style="text-align: center;">
                         <!-- Creador -->
                         <div class="member-item member-creator">
                             <div class="member-avatar">{{ proyecto.creador.first_name.0|default:proyecto.creador.username.0|upper }}</div>
@@ -179,7 +179,7 @@
                         <div class="no-members">
                             <p>Solo el creador pertenece a este proyecto.</p>
                             {% if puede_gestionar %}
-                                <a href="#" class="btn-secondary">➕ Agregar Miembros</a>
+                                <a href="#" class="btn-primary" style="margin-top: 15px; display: inline-block;">➕ Agregar Miembros</a>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -189,62 +189,82 @@
         </div>
 
         <!-- Tasks Section -->
-        <section class="tasks-section">
-            <div class="section-header">
-                <h2 class="section-title">📋 Tareas del Proyecto</h2>
-                <div class="section-actions">
+        <section class="tasks-section" style="margin-top: 30px;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 class="section-title" style="margin: 0;">📋 Tareas del Proyecto</h2>
+                <div class="section-actions" style="gap: 10px; display: flex;">
                     <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action">➕ Nueva Tarea</a>
                     <a href="{% url 'tareas_lista' %}?proyecto={{ proyecto.pk }}" class="btn-secondary">Ver Todas</a>
                 </div>
             </div>
 
             {% if tareas %}
-                <div class="tasks-table">
-                    <div class="table-header">
-                        <div class="col-title">Título</div>
-                        <div class="col-assigned">Asignado</div>
-                        <div class="col-priority">Prioridad</div>
-                        <div class="col-status">Estado</div>
-                        <div class="col-due">Vencimiento</div>
-                        <div class="col-actions">Acciones</div>
-                    </div>
+                <div class="tasks-table" style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     
                     {% for tarea in tareas %}
-                    <div class="table-row">
-                        <div class="col-title">
-                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}">{{ tarea.titulo }}</a>
+                    <div class="table-row" style="display: flex; padding: 15px; border-bottom: 1px solid #f1f3f4; align-items: center; transition: background-color 0.2s;">
+                        <div class="col-title" style="flex: 2; padding-right: 15px;">
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" style="color: #1e40af; font-weight: 500; text-decoration: none;">
+                                {{ tarea.titulo|default:"Sin título" }}
+                            </a>
+                            {% if tarea.descripcion %}
+                                <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">
+                                    {{ tarea.descripcion|truncatewords:8 }}
+                                </div>
+                            {% endif %}
+                            <div style="font-size: 0.75em; color: #9ca3af; margin-top: 2px;">
+                                Creada {{ tarea.created_at|timesince }} atrás por {{ tarea.creador.first_name|default:tarea.creador.username }}
+                            </div>
                         </div>
-                        <div class="col-assigned">
+                        <div class="col-assigned" style="flex: 1; padding-right: 10px;">
                             {% for asignado in tarea.asignados.all %}
-                                <span class="assigned-user">{{ asignado.first_name.0|default:asignado.username.0|upper }}</span>
+                                <div class="assigned-user" style="display: inline-block; background: #e0f2fe; color: #0277bd; padding: 4px 8px; border-radius: 12px; font-size: 0.85em; margin-right: 4px;">
+                                    {{ asignado.first_name|default:asignado.username }}
+                                </div>
                             {% empty %}
-                                <span class="no-assigned">Sin asignar</span>
+                                <span class="no-assigned" style="color: #9ca3af; font-style: italic;">Sin asignar</span>
                             {% endfor %}
                         </div>
-                        <div class="col-priority">
-                            <span class="priority-badge priority-{{ tarea.prioridad }}">
-                                {% if tarea.prioridad == 'critica' %}🚨{% elif tarea.prioridad == 'alta' %}⚠️{% elif tarea.prioridad == 'media' %}📋{% else %}📝{% endif %}
-                                {{ tarea.get_prioridad_display }}
-                            </span>
-                        </div>
-                        <div class="col-status">
-                            <span class="status-badge status-{{ tarea.estado }}">{{ tarea.get_estado_display }}</span>
-                        </div>
-                        <div class="col-due">
-                            {% if tarea.fecha_vencimiento %}
-                                {% if tarea.esta_vencida %}
-                                    <span class="due-overdue">🚨 Vencida</span>
-                                {% else %}
-                                    <span class="due-normal">{{ tarea.fecha_vencimiento|date:"d/m/Y" }}</span>
-                                {% endif %}
+                        <div class="col-priority" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.prioridad == 'critica' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fecaca; color: #dc2626; display: inline-block;">🚨 {{ tarea.get_prioridad_display }}</span>
+                            {% elif tarea.prioridad == 'alta' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fed7aa; color: #ea580c; display: inline-block;">⚠️ {{ tarea.get_prioridad_display }}</span>
+                            {% elif tarea.prioridad == 'media' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fef3c7; color: #d97706; display: inline-block;">📋 {{ tarea.get_prioridad_display }}</span>
                             {% else %}
-                                <span class="due-none">Sin fecha</span>
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #e0f2fe; color: #0277bd; display: inline-block;">📝 {{ tarea.get_prioridad_display }}</span>
                             {% endif %}
                         </div>
-                        <div class="col-actions">
-                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" class="btn-mini">👁️</a>
+                        <div class="col-status" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.estado == 'pendiente' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #f3f4f6; color: #6b7280; display: inline-block;">⏳ {{ tarea.get_estado_display }}</span>
+                            {% elif tarea.estado == 'en_proceso' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #dbeafe; color: #1d4ed8; display: inline-block;">🔄 {{ tarea.get_estado_display }}</span>
+                            {% elif tarea.estado == 'completada' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #dcfce7; color: #16a34a; display: inline-block;">✅ {{ tarea.get_estado_display }}</span>
+                            {% else %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #f3f4f6; color: #6b7280; display: inline-block;">📝 {{ tarea.get_estado_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-due" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.fecha_vencimiento %}
+                                {% if tarea.esta_vencida %}
+                                    <span class="due-overdue" style="color: #dc2626; font-weight: 600;">🚨 Vencida</span>
+                                    <div style="font-size: 0.8em; color: #ef4444;">{{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }}</div>
+                                    <div style="font-size: 0.75em; color: #dc2626;">Hace {{ tarea.fecha_vencimiento|timesince }}</div>
+                                {% else %}
+                                    <span class="due-normal" style="color: #374151; font-weight: 500;">📅 {{ tarea.fecha_vencimiento|date:"d/m/Y" }}</span>
+                                    <div style="font-size: 0.75em; color: #059669;">Faltan {{ tarea.fecha_vencimiento|timeuntil }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="due-none" style="color: #9ca3af; font-style: italic;">Sin fecha límite</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-actions" style="flex: 0.8; display: flex; gap: 8px;">
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" class="btn-mini" style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-decoration: none; transition: background 0.2s;" title="Ver detalle">👁️</a>
                             {% if tarea.creador == user or puede_gestionar %}
-                                <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini">✏️</a>
+                                <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini" style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-decoration: none; transition: background 0.2s;" title="Editar">✏️</a>
                             {% endif %}
                         </div>
                     </div>
