@@ -32,8 +32,8 @@
                 <p>Administra todas tus tareas asignadas y creadas</p>
             </div>
             <div class="actions-right">
-                <a href="{% url 'tarea_crear' %}" class="btn-action">➕ Nueva Tarea</a>
-                <a href="{% url 'proyectos_lista' %}" class="btn-action">📊 Ver Proyectos</a>
+                <a href="{% url 'tarea_crear' %}" class="btn-action-secondary">➕ Nueva Tarea</a>
+                <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📊 Ver Proyectos</a>
             </div>
         </section>
 
@@ -162,10 +162,10 @@
                     <h3>No hay tareas</h3>
                     {% if busqueda or estado_filtro or prioridad_filtro or proyecto_filtro %}
                         <p>No se encontraron tareas con los filtros aplicados.</p>
-                        <a href="{% url 'tareas_lista' %}" class="btn-action">Ver todas las tareas</a>
+                        <a href="{% url 'tareas_lista' %}" class="btn-action-secondary">Ver todas las tareas</a>
                     {% else %}
                         <p>¡Aún no tienes tareas! Crea tu primera tarea para empezar.</p>
-                        <a href="{% url 'tarea_crear' %}" class="btn-action">➕ Crear mi primera tarea</a>
+                        <a href="{% url 'tarea_crear' %}" class="btn-action-secondary">➕ Crear mi primera tarea</a>
                     {% endif %}
                 </div>
             {% endif %}

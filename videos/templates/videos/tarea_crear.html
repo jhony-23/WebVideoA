@@ -40,9 +40,9 @@
             </div>
             <div class="actions-right">
                 {% if tarea %}
-                    <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-secondary">👁️ Ver Detalle</a>
+                    <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-action-secondary">👁️ Ver Detalle</a>
                 {% endif %}
-                <a href="{% url 'tareas_lista' %}" class="btn-secondary">📋 Ver Todas</a>
+                <a href="{% url 'tareas_lista' %}" class="btn-action-secondary">📋 Ver Todas</a>
             </div>
         </section>
 
@@ -241,7 +241,7 @@
 
                     <!-- Form Actions -->
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary">
+                        <button type="submit" class="btn-action-secondary">
                             {% if tarea %}
                                 💾 Guardar Cambios
                             {% else %}
@@ -249,12 +249,12 @@
                             {% endif %}
                         </button>
                         
-                        <button type="button" class="btn-secondary" onclick="history.back()">
+                        <button type="button" class="btn-action-secondary" onclick="history.back()">
                             ↩️ Cancelar
                         </button>
                         
                         {% if tarea %}
-                            <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-outline">
+                            <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-action-secondary">
                                 👁️ Ver Tarea
                             </a>
                         {% endif %}

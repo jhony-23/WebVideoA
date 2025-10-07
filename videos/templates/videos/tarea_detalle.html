@@ -36,10 +36,10 @@
             </div>
             <div class="actions-right">
                 {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
-                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-action">✏️ Editar Tarea</a>
-                    <a href="{% url 'tarea_eliminar' tarea.id %}" class="btn-danger">🗑️ Eliminar</a>
+                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-action-secondary">✏️ Editar Tarea</a>
+                    <a href="{% url 'tarea_eliminar' tarea.id %}" class="btn-action-secondary">🗑️ Eliminar</a>
                 {% endif %}
-                <a href="{% url 'tareas_lista' %}" class="btn-action">📋 Ver Todas</a>
+                <a href="{% url 'tareas_lista' %}" class="btn-action-secondary">📋 Ver Todas</a>
             </div>
         </section>
 

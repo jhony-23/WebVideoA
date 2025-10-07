@@ -30,7 +30,7 @@
                 <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
                 <div class="status-badge">🚀 ¡Empecemos a trabajar!</div>
                 <div class="welcome-actions" style="margin-top: 20px;">
-                    <a href="{% url 'proyecto_crear' %}" class="btn-action">+ Crear mi primer proyecto</a>
+                    <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary">+ Crear mi primer proyecto</a>
                     <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📚 Ver proyectos</a>
                 </div>
             {% else %}
@@ -143,7 +143,7 @@
                     {% else %}
                         <div class="empty-state">
                             <p>🎯 ¡Aún no tienes proyectos! Crea tu primer proyecto para empezar.</p>
-                            <a href="{% url 'proyecto_crear' %}" class="btn-action">+ Crear Proyecto</a>
+                            <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary">+ Crear Proyecto</a>
                         </div>
                     {% endif %}
                 </section>

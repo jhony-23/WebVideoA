@@ -47,12 +47,12 @@
                 </div>
                 <div class="project-actions-main" style="margin-top: 25px; gap: 15px; display: flex; flex-wrap: wrap;">
                     {% if puede_gestionar %}
-                        <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action" style="margin-right: 15px;">✏️ Editar</a>
+                        <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action-secondary" style="margin-right: 15px;">✏️ Editar</a>
                         {% if proyecto.creador == user %}
-                            <a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn-danger" style="margin-right: 15px;">🗑️ Eliminar</a>
+                            <a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn-action-secondary" style="margin-right: 15px;">🗑️ Eliminar</a>
                         {% endif %}
                     {% endif %}
-                    <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action">➕ Nueva Tarea</a>
+                    <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action-secondary">➕ Nueva Tarea</a>
                 </div>
             </div>
         </section>
@@ -179,7 +179,7 @@
                         <div class="no-members">
                             <p>Solo el creador pertenece a este proyecto.</p>
                             {% if puede_gestionar %}
-                                <a href="#" class="btn-primary" style="margin-top: 15px; display: inline-block;">➕ Agregar Miembros</a>
+                                <a href="#" class="btn-action-secondary" style="margin-top: 15px; display: inline-block;">➕ Agregar Miembros</a>
                             {% endif %}
                         </div>
                         {% endif %}
