@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Completar Perfil - ADICLA</title>
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/upload.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+
+<body>
+    <header>
+        <h1 style="text-align: center;">Completar Perfil - Sistema ADICLA</h1>
+    </header>
+
+    <main>
+        <section class="form-section" style="max-width: 600px; margin: 50px auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2>🎉 ¡Bienvenido a ADICLA!</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Para personalizar tu experiencia, completa la siguiente información:
+                </p>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" class="upload-form">
+                {% csrf_token %}
+                
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="{{ form.nombres.id_for_label }}">{{ form.nombres.label }}</label>
+                        {{ form.nombres }}
+                        {% if form.nombres.help_text %}
+                            <small class="form-help">{{ form.nombres.help_text }}</small>
+                        {% endif %}
+                        {% if form.nombres.errors %}
+                            <div class="field-errors">{{ form.nombres.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.apellidos.id_for_label }}">{{ form.apellidos.label }}</label>
+                        {{ form.apellidos }}
+                        {% if form.apellidos.help_text %}
+                            <small class="form-help">{{ form.apellidos.help_text }}</small>
+                        {% endif %}
+                        {% if form.apellidos.errors %}
+                            <div class="field-errors">{{ form.apellidos.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.area_trabajo.id_for_label }}">{{ form.area_trabajo.label }}</label>
+                    {{ form.area_trabajo }}
+                    {% if form.area_trabajo.help_text %}
+                        <small class="form-help">{{ form.area_trabajo.help_text }}</small>
+                    {% endif %}
+                    {% if form.area_trabajo.errors %}
+                        <div class="field-errors">{{ form.area_trabajo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.cargo.id_for_label }}">{{ form.cargo.label }}</label>
+                    {{ form.cargo }}
+                    {% if form.cargo.help_text %}
+                        <small class="form-help">{{ form.cargo.help_text }}</small>
+                    {% endif %}
+                    {% if form.cargo.errors %}
+                        <div class="field-errors">{{ form.cargo.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.telefono_extension.id_for_label }}">{{ form.telefono_extension.label }}</label>
+                    {{ form.telefono_extension }}
+                    {% if form.telefono_extension.help_text %}
+                        <small class="form-help">{{ form.telefono_extension.help_text }}</small>
+                    {% endif %}
+                    {% if form.telefono_extension.errors %}
+                        <div class="field-errors">{{ form.telefono_extension.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" 
+                        style="width: 100%; padding: 15px; background: linear-gradient(135deg, #1a5490 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px;">
+                    ✅ Completar Perfil y Continuar
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <p style="color: #666; font-size: 14px;">
+                    Esta información nos ayuda a personalizar tu experiencia en el sistema
+                </p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #1a5490;
+        }
+        
+        .form-help {
+            display: block;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .field-errors {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
+</body>
+</html>

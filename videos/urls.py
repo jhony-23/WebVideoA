@@ -21,6 +21,8 @@ urlpatterns = [
     path('tareas/', views.tareas_dashboard, name='tareas_dashboard'),
     path('tareas/login/', views.tareas_login, name='tareas_login'),
     path('tareas/logout/', views.tareas_logout, name='tareas_logout'),
+    path('registrarse/', views.registrarse, name='registrarse'),
+    path('tareas/completar-perfil/', views.completar_perfil, name='completar_perfil'),
     
     # Gestión de Proyectos
     path('tareas/proyectos/', views.proyectos_lista, name='proyectos_lista'),
@@ -37,6 +39,7 @@ urlpatterns = [
     path('tareas/tarea/<int:tarea_id>/editar/', views.tarea_editar, name='tarea_editar'),
     path('tareas/tarea/<int:tarea_id>/eliminar/', views.tarea_eliminar, name='tarea_eliminar'),
     path('tareas/tarea/<int:tarea_id>/estado/', views.tarea_cambiar_estado, name='tarea_cambiar_estado'),
+    path('tareas/api/tarea/<int:tarea_id>/cambiar-estado/', views.cambiar_estado_tarea, name='cambiar_estado_tarea'),
     
     # Comentarios
     path('tareas/proyecto/<int:proyecto_id>/comentario/', views.comentario_proyecto_crear, name='comentario_proyecto_crear'),
@@ -44,8 +47,12 @@ urlpatterns = [
     
     # Archivos
     path('tareas/tarea/<int:tarea_id>/archivo/', views.tarea_archivo_crear, name='tarea_archivo_crear'),
+    path('tareas/proyecto/<int:proyecto_id>/archivo/', views.proyecto_archivo_crear, name='proyecto_archivo_crear'),
     path('tareas/archivo/<str:tipo>/<int:archivo_id>/descargar/', views.archivo_descargar, name='archivo_descargar'),
     path('tareas/archivo/<str:tipo>/<int:archivo_id>/previsualizar/', views.archivo_previsualizar, name='archivo_previsualizar'),
+    
+    # Miembros
+    path('tareas/proyecto/<int:proyecto_id>/miembro/', views.proyecto_agregar_miembro, name='proyecto_agregar_miembro'),
     
     # Repositorio
     path('repositorio/', views.repositorio_view, name='repositorio'),

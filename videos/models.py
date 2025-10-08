@@ -196,44 +196,6 @@ def delete_file_on_delete(sender, instance, **kwargs):
 
 # ==================== MODELOS PARA GESTIÓN DE TAREAS ====================
 
-class PerfilUsuario(models.Model):
-    """Extensión del modelo User para información adicional"""
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-    foto = models.ImageField(upload_to='perfiles/', blank=True, null=True)
-    telefono = models.CharField(max_length=20, blank=True)
-    departamento = models.CharField(max_length=100, blank=True)
-    puesto = models.CharField(max_length=100, blank=True)
-    habilidades = models.TextField(blank=True, help_text="Separar habilidades con comas")
-    bio = models.TextField(blank=True, max_length=500)
-    fecha_ingreso = models.DateField(null=True, blank=True)
-    configuracion_notificaciones = models.JSONField(default=dict, blank=True)
-    
-    # Preferencias
-    tema_preferido = models.CharField(
-        max_length=20, 
-        choices=[('light', 'Claro'), ('dark', 'Oscuro')], 
-        default='light'
-    )
-    idioma = models.CharField(max_length=10, default='es')
-    zona_horaria = models.CharField(max_length=50, default='America/Guatemala')
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'perfil_usuario'
-        verbose_name = 'Perfil de Usuario'
-        verbose_name_plural = 'Perfiles de Usuario'
-    
-    def __str__(self):
-        return f"Perfil de {self.usuario.get_full_name() or self.usuario.username}"
-    
-    def get_habilidades_list(self):
-        """Retorna lista de habilidades"""
-        if self.habilidades:
-            return [h.strip() for h in self.habilidades.split(',') if h.strip()]
-        return []
-
 
 class Proyecto(models.Model):
     """Modelo para gestión de proyectos"""
@@ -647,11 +609,71 @@ class ArchivoComentario(models.Model):
             return '📎'
 
 
+class PerfilUsuario(models.Model):
+    """Perfil extendido para usuarios de ADICLA"""
+    AREAS_TRABAJO = [
+        ('informatica', 'Informática/IT'),
+        ('contabilidad', 'Contabilidad'),
+        ('administracion', 'Administración'),
+        ('gerencia', 'Gerencia'),
+        ('mercadotecnia', 'Mercadotecnia'),
+        ('creditos', 'Créditos'),
+        ('recursos_humanos', 'Recursos Humanos'),
+        ('legal', 'Legal'),
+        ('auditoria', 'Auditoría'),
+        ('secretaria', 'Secretaría'),
+        ('otro', 'Otro')
+    ]
+    
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    
+    # Información personal
+    nombres = models.CharField(max_length=100, verbose_name="Nombres")
+    apellidos = models.CharField(max_length=100, verbose_name="Apellidos")
+    
+    # Información laboral
+    area_trabajo = models.CharField(max_length=50, choices=AREAS_TRABAJO, verbose_name="Área de Trabajo")
+    cargo = models.CharField(max_length=100, blank=True, verbose_name="Cargo/Posición")
+    telefono_extension = models.CharField(max_length=20, blank=True, verbose_name="Teléfono/Extensión")
+    
+    # Configuración de perfil
+    perfil_completado = models.BooleanField(default=False)
+    
+    # Metadatos
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'perfil_usuario'
+        verbose_name = 'Perfil de Usuario'
+        verbose_name_plural = 'Perfiles de Usuario'
+    
+    def __str__(self):
+        return f"{self.get_nombre_completo()} - {self.get_area_trabajo_display()}"
+    
+    def get_nombre_completo(self):
+        """Retorna nombre completo del usuario"""
+        return f"{self.nombres} {self.apellidos}".strip()
+    
+    def get_iniciales(self):
+        """Retorna iniciales del usuario"""
+        nombres_parts = self.nombres.split()
+        apellidos_parts = self.apellidos.split()
+        
+        iniciales = ""
+        if nombres_parts:
+            iniciales += nombres_parts[0][0].upper()
+        if apellidos_parts:
+            iniciales += apellidos_parts[0][0].upper()
+        
+        return iniciales or "U"
+
+
 # Señales para crear perfil automáticamente
 @receiver(models.signals.post_save, sender=User)
 def crear_perfil_usuario(sender, instance, created, **kwargs):
     """Crear perfil automáticamente al crear usuario"""
-    if created:
+    if created and not hasattr(instance, 'perfil'):
         PerfilUsuario.objects.create(usuario=instance)
 
 @receiver(models.signals.post_save, sender=User)

@@ -34,7 +34,7 @@
                     <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📚 Ver proyectos</a>
                 </div>
             {% else %}
-                <h1>👋 ¡Hola de nuevo, {{ user.first_name|default:user.username }}!</h1>
+                <h1>👋 ¡Hola de nuevo, {{ user.perfil.nombres|default:user.first_name|default:user.username }}!</h1>
                 <p>Aquí tienes un resumen de tu actividad en ADICLA</p>
                 <div class="status-badge">✅ Sistema Activo</div>
             {% endif %}

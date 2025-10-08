@@ -158,3 +158,14 @@ LOGGING = {
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/upload/'
 SESSION_COOKIE_AGE = 28800  # 8 horas en segundos
+
+# Configuración para sesiones múltiples independientes
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_PATH = '/'
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Permitir múltiples sesiones por usuario en diferentes pestañas
+# Usar diferentes nombres de cookie para diferentes sistemas
+TAREAS_SESSION_COOKIE_NAME = 'tareas_sessionid'
+UPLOAD_SESSION_COOKIE_NAME = 'upload_sessionid'

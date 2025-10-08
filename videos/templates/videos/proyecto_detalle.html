@@ -175,12 +175,39 @@
                         </div>
                         {% endfor %}
                         
+                        <!-- Botón para agregar miembros (siempre visible para el creador) -->
+                        {% if proyecto.creador == user %}
+                        <div class="add-members-section" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
+                            <h4 style="margin-bottom: 15px; color: #495057;">➕ Agregar Nuevo Miembro</h4>
+                            <form method="post" action="{% url 'proyecto_agregar_miembro' proyecto.id %}" style="display: flex; flex-direction: column; gap: 10px;">
+                                {% csrf_token %}
+                                <select name="usuario" class="form-control" required style="padding: 8px; border-radius: 4px; border: 1px solid #ced4da;">
+                                    <option value="">Selecciona un usuario...</option>
+                                    {% for usuario in usuarios_disponibles %}
+                                        <option value="{{ usuario.id }}">
+                                            {{ usuario.get_full_name|default:usuario.username }} ({{ usuario.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small style="color: #6c757d; font-size: 0.875em;">
+                                    💡 El usuario agregado tendrá permisos completos de administrador
+                                </small>
+                                <button type="submit" class="btn-action-secondary" style="align-self: flex-start; padding: 8px 16px;">
+                                    ✅ Agregar Miembro
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
                         {% if proyecto.miembros.count == 0 %}
-                        <div class="no-members">
-                            <p>Solo el creador pertenece a este proyecto.</p>
-                            {% if puede_gestionar %}
-                                <a href="#" class="btn-action-secondary" style="margin-top: 15px; display: inline-block;">➕ Agregar Miembros</a>
-                            {% endif %}
+                        <div class="no-members" style="margin-top: 15px;">
+                            <p style="color: #6c757d; font-style: italic;">
+                                {% if proyecto.creador == user %}
+                                    Puedes agregar miembros usando el formulario de arriba.
+                                {% else %}
+                                    Solo el creador pertenece a este proyecto.
+                                {% endif %}
+                            </p>
                         </div>
                         {% endif %}
                     </div>
@@ -280,35 +307,64 @@
             {% endif %}
         </section>
 
-        <!-- Archivos del Proyecto -->
-        {% if archivos %}
+        <!-- Files Section -->
         <section class="files-section">
-            <div class="section-header">
-                <h2 class="section-title">📎 Archivos del Proyecto</h2>
+            <h2>📎 Archivos del Proyecto</h2>
+            
+            <!-- File Upload Form -->
+            {% if puede_gestionar %}
+            <div class="comment-form-container">
+                <h3>📤 Subir Archivo</h3>
+                <form method="post" enctype="multipart/form-data" action="{% url 'proyecto_archivo_crear' proyecto.id %}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_archivo">📎 Seleccionar archivo</label>
+                        <input type="file" id="id_archivo" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_descripcion">Descripción</label>
+                        <input type="text" id="id_descripcion" name="descripcion" class="form-control" placeholder="Descripción opcional del archivo...">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">📎 Subir Archivo</button>
+                    </div>
+                </form>
             </div>
-            <div class="files-grid">
-                {% for archivo in archivos %}
-                <div class="file-card">
-                    <div class="file-icon">{{ archivo.get_icono }}</div>
-                    <div class="file-info">
-                        <h4 class="file-name">{{ archivo.nombre_original }}</h4>
-                        <p class="file-details">
-                            {{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}
-                        </p>
-                        <p class="file-uploader">📤 {{ archivo.subido_por.first_name|default:archivo.subido_por.username }}</p>
-                        {% if archivo.descripcion %}
-                            <p class="file-description">{{ archivo.descripcion }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="file-actions">
-                        <a href="{% url 'archivo_previsualizar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action" target="_blank">👁️</a>
-                        <a href="{% url 'archivo_descargar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action">⬇️</a>
-                    </div>
+            {% endif %}
+            
+            <!-- Files Grid -->
+            {% if archivos %}
+                <div class="files-grid">
+                    {% for archivo in archivos %}
+                        <div class="file-card">
+                            <div class="file-icon">{{ archivo.get_icono }}</div>
+                            <div class="file-info">
+                                <h4 class="file-name">{{ archivo.nombre_original }}</h4>
+                                <p class="file-details">{{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}</p>
+                                <p class="file-uploader">Subido por {{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</p>
+                                {% if archivo.descripcion %}
+                                    <p class="file-description">"{{ archivo.descripcion }}"</p>
+                                {% endif %}
+                            </div>
+                            <div class="file-actions">
+                                <a href="{% url 'archivo_descargar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action">⬇️ Descargar</a>
+                                {% if archivo.puede_previsualizar %}
+                                    <a href="{% url 'archivo_previsualizar' tipo='proyecto' archivo_id=archivo.id %}" target="_blank" class="btn-file-action">👁️ Ver</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+            {% else %}
+                <div class="empty-comments">
+                    <div class="empty-icon">📎</div>
+                    <h3>No hay archivos</h3>
+                    <p>{% if puede_gestionar %}Sube el primer archivo para este proyecto.{% else %}Este proyecto no tiene archivos aún.{% endif %}</p>
+                </div>
+            {% endif %}
         </section>
-        {% endif %}
+
+
 
         <!-- Comentarios del Proyecto -->
         <section class="comments-section">

@@ -37,16 +37,7 @@ class MediaForm(forms.ModelForm):
 class ProyectoForm(forms.ModelForm):
     """Formulario para crear y editar proyectos"""
     
-    # Campo adicional para archivos
-    archivo = forms.FileField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
-        }),
-        label='📎 Adjuntar archivo (opcional)',
-        help_text='Puedes subir un documento relacionado al proyecto'
-    )
+
 
     class Meta:
         model = Proyecto
@@ -148,11 +139,10 @@ class TareaForm(forms.ModelForm):
             ).distinct()
             self.fields['proyecto'].queryset = proyectos_accesibles
             
-            # Filtrar usuarios asignables (miembros de proyectos accesibles)
+            # Mostrar TODOS los usuarios con dominio @adicla.org.gt que ya tienen cuenta
             usuarios_asignables = User.objects.filter(
-                models.Q(proyectos_creados__in=proyectos_accesibles) |
-                models.Q(miembro_proyectos__proyecto__in=proyectos_accesibles)
-            ).distinct()
+                email__endswith='@adicla.org.gt'
+            ).exclude(email='').order_by('email')
             self.fields['asignados'].queryset = usuarios_asignables
             
             # Filtrar dependencias a tareas del mismo usuario
@@ -168,16 +158,7 @@ class TareaForm(forms.ModelForm):
             self.fields['proyecto'].initial = self.proyecto_inicial
             self.fields['proyecto'].widget.attrs['readonly'] = True
     
-    # Campo adicional para archivos
-    archivo = forms.FileField(
-        required=False,
-        widget=forms.FileInput(attrs={
-            'class': 'form-control',
-            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif'
-        }),
-        label='📎 Adjuntar archivo (opcional)',
-        help_text='Puedes subir un documento relacionado a la tarea'
-    )
+
 
     class Meta:
         model = Tarea
@@ -212,7 +193,7 @@ class TareaForm(forms.ModelForm):
             'proyecto': forms.Select(attrs={'class': 'form-control'}),
             'asignados': forms.SelectMultiple(attrs={
                 'class': 'form-control',
-                'size': 4
+                'size': 6
             }),
             'estado': forms.Select(attrs={'class': 'form-control'}),
             'prioridad': forms.Select(attrs={'class': 'form-control'}),
@@ -238,7 +219,7 @@ class TareaForm(forms.ModelForm):
             }),
         }
         help_texts = {
-            'asignados': 'Mantén presionado Ctrl (Cmd en Mac) para seleccionar múltiples usuarios',
+            'asignados': 'Todos los usuarios con cuenta @adicla.org.gt. Mantén Ctrl (Cmd en Mac) para seleccionar múltiples.',
             'fecha_vencimiento': 'Opcional - Fecha límite para completar la tarea',
             'tiempo_estimado': 'Formato: HH:MM:SS (ej: 4:30:00 para 4h 30m)',
             'dependencias': 'Tareas que deben completarse antes que esta',
@@ -283,17 +264,18 @@ class MiembroProyectoForm(forms.ModelForm):
     
     class Meta:
         model = MiembroProyecto
-        fields = ['usuario', 'rol']
+        fields = ['usuario']  # Solo usuario, rol será automáticamente 'admin'
         labels = {
-            'usuario': 'Usuario',
-            'rol': 'Rol en el Proyecto',
+            'usuario': '👤 Seleccionar Usuario',
         }
         widgets = {
-            'usuario': forms.Select(attrs={'class': 'form-control'}),
-            'rol': forms.Select(attrs={'class': 'form-control'}),
+            'usuario': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'width: 100%; padding: 8px;'
+            }),
         }
         help_texts = {
-            'rol': 'Usuario: Acceso básico. Jefe: Puede gestionar tareas. Admin: Control total',
+            'usuario': 'El usuario agregado tendrá permisos completos de administrador del proyecto',
         }
 
 

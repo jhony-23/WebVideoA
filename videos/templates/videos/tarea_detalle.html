@@ -58,12 +58,14 @@
                             <div class="status-badge status-{{ tarea.estado }}">
                                 {{ tarea.get_estado_display }}
                             </div>
-                            {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                            {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user or user in tarea.asignados.all %}
                                 <select class="status-change-select" data-task-id="{{ tarea.id }}">
                                     {% for codigo, nombre in estados_disponibles %}
                                         <option value="{{ codigo }}" {% if tarea.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
                                     {% endfor %}
                                 </select>
+                            {% else %}
+                                <span class="status-display">{{ tarea.get_estado_display }}</span>
                             {% endif %}
                         </div>
                     </div>
@@ -279,8 +281,8 @@
                         <div class="file-card">
                             <div class="file-icon">{{ archivo.get_icono }}</div>
                             <div class="file-info">
-                                <h4 class="file-name">{{ archivo.nombre }}</h4>
-                                <p class="file-details">{{ archivo.get_tamaño_legible }} • {{ archivo.fecha_subida|date:"d/m/Y H:i" }}</p>
+                                <h4 class="file-name">{{ archivo.nombre_original }}</h4>
+                                <p class="file-details">{{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}</p>
                                 <p class="file-uploader">Subido por {{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</p>
                                 {% if archivo.descripcion %}
                                     <p class="file-description">"{{ archivo.descripcion }}"</p>
@@ -346,7 +348,7 @@
                                             {% for archivo in comentario.archivos.all %}
                                                 <div class="comment-file">
                                                     <span class="file-icon-small">{{ archivo.get_icono }}</span>
-                                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre }}</a>
+                                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre_original }}</a>
                                                     <span class="file-size">{{ archivo.get_tamaño_legible }}</span>
                                                 </div>
                                             {% endfor %}
@@ -395,7 +397,7 @@
                                                 {% for archivo in respuesta.archivos.all %}
                                                     <div class="comment-file">
                                                         <span class="file-icon-small">{{ archivo.get_icono }}</span>
-                                                        <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre }}</a>
+                                                        <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre_original }}</a>
                                                         <span class="file-size">{{ archivo.get_tamaño_legible }}</span>
                                                     </div>
                                                 {% endfor %}
@@ -538,5 +540,122 @@
             </div>
         </div>
     </footer>
+
+    <script>
+        // Funcionalidad para cambiar estado de tarea en detalle
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.querySelector('.status-change-select');
+            
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    const tareaId = this.dataset.taskId;
+                    const nuevoEstado = this.value;
+                    const selectElement = this;
+                    
+                    // Mostrar indicador de carga
+                    selectElement.style.opacity = '0.6';
+                    selectElement.disabled = true;
+                    
+                    // Enviar solicitud AJAX
+                    fetch(`/tareas/api/tarea/${tareaId}/cambiar-estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: `estado=${nuevoEstado}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showMessage(data.message, 'success');
+                            
+                            // Actualizar el badge de estado visualmente
+                            updateStatusBadge(nuevoEstado);
+                        } else {
+                            showMessage(data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('Error de conexión. Intenta nuevamente.', 'error');
+                    })
+                    .finally(() => {
+                        selectElement.style.opacity = '1';
+                        selectElement.disabled = false;
+                    });
+                });
+            }
+        });
+        
+        // Función para obtener cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Función para mostrar mensajes
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible`;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                padding: 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+            `;
+            messageDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="
+                    float: right; 
+                    background: none; 
+                    border: none; 
+                    font-size: 18px; 
+                    cursor: pointer;
+                    margin-left: 10px;
+                ">&times;</button>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Actualizar badge de estado
+        function updateStatusBadge(nuevoEstado) {
+            const statusBadge = document.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = `status-badge status-${nuevoEstado}`;
+                const estadosTexto = {
+                    'pendiente': 'Pendiente',
+                    'en_proceso': 'En Proceso', 
+                    'en_revision': 'En Revisión',
+                    'completada': 'Completada'
+                };
+                statusBadge.textContent = estadosTexto[nuevoEstado] || nuevoEstado;
+            }
+        }
+    </script>
 </body>
 </html>

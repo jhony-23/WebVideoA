@@ -61,23 +61,24 @@ class MediaAdmin(admin.ModelAdmin):
 
 @admin.register(PerfilUsuario)
 class PerfilUsuarioAdmin(admin.ModelAdmin):
-    list_display = ['usuario', 'departamento', 'puesto', 'tema_preferido', 'created_at']
-    list_filter = ['departamento', 'puesto', 'tema_preferido', 'zona_horaria']
-    search_fields = ['usuario__username', 'usuario__email', 'usuario__first_name', 'usuario__last_name']
+    list_display = ['usuario', 'get_nombre_completo', 'area_trabajo', 'perfil_completado', 'created_at']
+    list_filter = ['area_trabajo', 'perfil_completado', 'created_at']
+    search_fields = ['usuario__username', 'usuario__email', 'nombres', 'apellidos', 'cargo']
     readonly_fields = ['created_at', 'updated_at']
+    
+    def get_nombre_completo(self, obj):
+        return obj.get_nombre_completo()
+    get_nombre_completo.short_description = 'Nombre Completo'
     
     fieldsets = (
         ('Usuario', {
             'fields': ('usuario',)
         }),
         ('Información Personal', {
-            'fields': ('foto', 'telefono', 'departamento', 'puesto', 'fecha_ingreso', 'bio')
+            'fields': ('nombres', 'apellidos', 'area_trabajo', 'cargo', 'telefono_extension')
         }),
-        ('Habilidades', {
-            'fields': ('habilidades',)
-        }),
-        ('Preferencias', {
-            'fields': ('tema_preferido', 'idioma', 'zona_horaria', 'configuracion_notificaciones')
+        ('Estado del Perfil', {
+            'fields': ('perfil_completado',)
         }),
         ('Metadatos', {
             'fields': ('created_at', 'updated_at'),
