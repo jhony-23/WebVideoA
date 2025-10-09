@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-0)h94amrf7vl3v70v#^e9o__hpkowcp0z%fn@v(3g09dtez^eh
 DEBUG = True
 
 # Permitir estos hosts (IP del servidor y localhost para pruebas locales)
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.104']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.0.59']
 
 # Application definition
 INSTALLED_APPS = [
@@ -58,11 +58,18 @@ WSGI_APPLICATION = 'AdiclaVideo.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'mssql',
+        'NAME': 'PlataformaVideosA',             # Nombre de tu base de datos
+        'USER': '',                             # Usuario SQL
+        'PASSWORD': '',        # Contraseña de SQL Server
+        'HOST': '192.168.0.59',                  # IP de tu servidor
+        'PORT': '1433',                           # Puerto TCP/IP
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server', 
+             'trusted_connection': 'yes', # ODBC driver instalado en tu PC
+        },
     }
 }
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
@@ -146,7 +153,7 @@ LOGGING = {
         }
     }
 }
-
+ 
 # Configuración de autenticación
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/upload/'

@@ -60,16 +60,19 @@
 <body>
     <div class="login-container">
         <h2>Repositorio ADICLA</h2>
-        <form method="POST" action="/repositorio/">
+        <form method="POST" action="/respositorioadicla.html">
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="color:#d32f2f; margin-bottom:10px;">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
             {% csrf_token %}
-            <input type="text" name="usuario" placeholder="Correo o Usuario" required>
-            <input type="password" name="password" placeholder="Contraseña" required>
-            
+            <input type="text" name="email" id="usuario" placeholder="Correo o Usuario" required>
+            <input type="password" name="password" id="password" placeholder="Contraseña" required>
             <select name="puesto" id="puesto" required>
                 <option value="">Seleccione un puesto</option>
             </select>
-            
-            <button type="submit">Ingresar</button> <nav>repositorio</nav>
+            <button type="submit">Ingresar</button>
         </form>
     </div>
 
@@ -82,7 +85,6 @@
             "Recepcionista","Gestor de Crédito","Auditor Interno","Encargado de Sistemas",
             "Encargado de Almacén","Asistente Administrativo","Practicante","Jefe de Talento Humano"
         ];
-
         const selectPuesto = document.getElementById("puesto");
         puestosBD.forEach(puesto => {
             const option = document.createElement("option");
