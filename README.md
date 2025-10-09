@@ -27,9 +27,7 @@
 
 - **Streaming HLS Adaptativo** con múltiples calidades automáticas
 - **Reproducción Sincronizada** para múltiples clientes simultáneos
-- **Duplicado Automático** de videos verticales para aprovechar pantalla completa
 - **Streaming Automático** con horarios de oficina (7:30 AM - 6:00 PM)
-- **Monitoreo Windows** integrado con Task Scheduler
 
 ### 👥 **Gestión de Usuarios Completa**
 
