@@ -80,6 +80,15 @@
                 const media = data.current_media;
                 const elapsed = data.elapsed;
                 const duration = data.duration;
+                
+                // Debug: mostrar datos recibidos
+                console.log('Datos recibidos:', {
+                    media: media,
+                    elapsed: elapsed,
+                    duration: duration,
+                    index: data.current_index,
+                    total: data.total_items
+                });
 
                 // Mostrar estado LIVE
                 setStatus(`🔴 LIVE - ${media.title} (${data.current_index + 1}/${data.total_items})`, 'live');
@@ -112,7 +121,7 @@
             bufferIndicator.style.display = 'block';
             videoPlayer.style.display = 'block';
 
-            const videoUrl = media.stream_url || media.file;
+            const videoUrl = media.stream_url || media.file_url || media.file;
 
             // Si es HLS
             if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
@@ -156,7 +165,8 @@
         }
 
         function playVideoTag(media, startFrom = 0) {
-            videoPlayer.src = media.file;
+            const videoUrl = media.file_url || media.stream_url || media.file;
+            videoPlayer.src = videoUrl;
             videoPlayer.oncanplay = function () {
                 bufferIndicator.style.display = 'none';
                 videoPlayer.currentTime = startFrom;
@@ -171,8 +181,23 @@
             if (hls) { hls.destroy(); hls = null; }
             videoPlayer.style.display = 'none';
             bufferIndicator.style.display = 'none';
-            imagePlayer.src = media.file;
+            
+            // Usar la URL correcta para imágenes
+            const imageUrl = media.file_url || media.stream_url || media.file;
+            console.log('Cargando imagen:', imageUrl); // Debug
+            
+            imagePlayer.src = imageUrl;
             imagePlayer.style.display = 'block';
+            
+            // Manejar errores de carga de imagen
+            imagePlayer.onerror = function() {
+                console.error('Error cargando imagen:', imageUrl);
+                setStatus('❌ Error cargando imagen', 'error');
+            };
+            
+            imagePlayer.onload = function() {
+                console.log('Imagen cargada correctamente:', imageUrl);
+            };
         }
 
         function stopCurrentMedia() {

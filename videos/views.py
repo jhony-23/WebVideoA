@@ -252,11 +252,37 @@ def sync_status(request):
             'message': 'Media no encontrado'
         })
     
-    # Completar con respuesta válida
+    # Calcular información adicional necesaria
+    elapsed_time = state.get_elapsed_time()
+    current_index = state.get_current_index()
+    total_items = len(state.playlist_data)
+    
+    # Obtener duración del media actual
+    if current_media.media_type == 'image':
+        duration = 10  # Imágenes 10 segundos
+    else:
+        duration = int(current_media.duration) if current_media.duration else 30
+    
+    # Preparar datos del media para el frontend
+    media_data = {
+        'id': current_media.id,
+        'title': current_media.title,
+        'media_type': current_media.media_type,
+        'file_url': current_media.file.url if current_media.file else None,
+        'stream_url': current_media.get_stream_url(),
+        'hls_manifest_url': current_media.get_hls_manifest_url() if current_media.media_type == 'video' else None,
+        'is_stream_ready': current_media.is_stream_ready
+    }
+    
+    # Respuesta completa con todos los datos necesarios
     return JsonResponse({
         'active': True,
-        'current_media': current_media.id,
-        'position': state.get_current_position(),
+        'current_media': media_data,
+        'position': elapsed_time,
+        'elapsed': elapsed_time,
+        'duration': duration,
+        'current_index': current_index,
+        'total_items': total_items,
         'playlist': state.playlist_data
     })
 
