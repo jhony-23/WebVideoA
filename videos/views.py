@@ -271,7 +271,9 @@ def sync_status(request):
         'file_url': current_media.file.url if current_media.file else None,
         'stream_url': current_media.get_stream_url(),
         'hls_manifest_url': current_media.get_hls_manifest_url() if current_media.media_type == 'video' else None,
-        'is_stream_ready': current_media.is_stream_ready
+        'is_stream_ready': current_media.is_stream_ready,
+        'width': current_media.width or 0,
+        'height': current_media.height or 0
     }
     
     # Respuesta completa con todos los datos necesarios
