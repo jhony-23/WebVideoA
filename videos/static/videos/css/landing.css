@@ -678,7 +678,16 @@ section {
     }
     
     .nav-links {
-        display: none;
+        display: flex;
+        gap: 15px;
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-links a {
+        padding: 5px 10px;
+        white-space: nowrap;
     }
     
     .hero {
