@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Media
+from .models import Media, PerfilUsuario, Proyecto, Tarea, MiembroProyecto
 from django.utils.html import format_html
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 
 @admin.register(Media)
 class MediaAdmin(admin.ModelAdmin):
@@ -53,3 +55,139 @@ class MediaAdmin(admin.ModelAdmin):
             'classes': ('collapse',),
         }),
     )
+
+
+# ==================== ADMIN PARA GESTIÓN DE TAREAS ====================
+
+@admin.register(PerfilUsuario)
+class PerfilUsuarioAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'get_nombre_completo', 'area_trabajo', 'perfil_completado', 'created_at']
+    list_filter = ['area_trabajo', 'perfil_completado', 'created_at']
+    search_fields = ['usuario__username', 'usuario__email', 'nombres', 'apellidos', 'cargo']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def get_nombre_completo(self, obj):
+        return obj.get_nombre_completo()
+    get_nombre_completo.short_description = 'Nombre Completo'
+    
+    fieldsets = (
+        ('Usuario', {
+            'fields': ('usuario',)
+        }),
+        ('Información Personal', {
+            'fields': ('nombres', 'apellidos', 'area_trabajo', 'cargo', 'telefono_extension')
+        }),
+        ('Estado del Perfil', {
+            'fields': ('perfil_completado',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+
+class MiembroProyectoInline(admin.TabularInline):
+    model = MiembroProyecto
+    extra = 1
+    autocomplete_fields = ['usuario']
+
+
+@admin.register(Proyecto)
+class ProyectoAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'codigo', 'estado', 'creador', 'progreso_display', 'created_at']
+    list_filter = ['estado', 'visibilidad', 'created_at', 'fecha_inicio']
+    search_fields = ['nombre', 'codigo', 'descripcion', 'creador__username']
+    readonly_fields = ['created_at', 'updated_at', 'progreso_display']
+    autocomplete_fields = ['creador']
+    inlines = [MiembroProyectoInline]
+    
+    def progreso_display(self, obj):
+        progreso = obj.get_progreso()
+        color = '#10b981' if progreso >= 75 else '#f59e0b' if progreso >= 50 else '#ef4444'
+        return format_html(
+            '<div style="background: #f3f4f6; border-radius: 10px; height: 20px; width: 100px; position: relative;">'
+            '<div style="background: {}; height: 100%; width: {}%; border-radius: 10px;"></div>'
+            '<span style="position: absolute; top: 2px; left: 5px; font-size: 12px; color: #374151;">{}%</span>'
+            '</div>',
+            color, progreso, progreso
+        )
+    progreso_display.short_description = 'Progreso'
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre', 'codigo', 'descripcion')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_inicio', 'fecha_fin_estimada', 'fecha_fin_real')
+        }),
+        ('Estado y Configuración', {
+            'fields': ('estado', 'visibilidad', 'creador', 'color', 'icono')
+        }),
+        ('Estadísticas', {
+            'fields': ('progreso_display',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+
+
+@admin.register(Tarea)
+class TareaAdmin(admin.ModelAdmin):
+    list_display = ['titulo', 'proyecto', 'estado', 'prioridad', 'creador', 'fecha_vencimiento', 'vencida_display']
+    list_filter = ['estado', 'prioridad', 'proyecto', 'created_at', 'fecha_vencimiento']
+    search_fields = ['titulo', 'descripcion', 'proyecto__nombre', 'creador__username']
+    readonly_fields = ['created_at', 'updated_at', 'vencida_display']
+    autocomplete_fields = ['creador', 'proyecto']
+    filter_horizontal = ['asignados', 'dependencias']
+    
+    def vencida_display(self, obj):
+        if obj.esta_vencida():
+            return format_html('<span style="color: #ef4444; font-weight: bold;">🚨 VENCIDA</span>')
+        elif obj.fecha_vencimiento:
+            dias = obj.dias_para_vencimiento()
+            if dias is not None:
+                if dias <= 1:
+                    return format_html('<span style="color: #f59e0b;">⚠️ Vence pronto</span>')
+                else:
+                    return format_html('<span style="color: #10b981;">✅ A tiempo</span>')
+        return '---'
+    vencida_display.short_description = 'Estado Vencimiento'
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('titulo', 'descripcion', 'proyecto')
+        }),
+        ('Asignación', {
+            'fields': ('creador', 'asignados')
+        }),
+        ('Estado y Prioridad', {
+            'fields': ('estado', 'prioridad', 'tags')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_vencimiento', 'fecha_inicio_estimada', 'fecha_inicio_real', 'fecha_completada')
+        }),
+        ('Tiempo', {
+            'fields': ('tiempo_estimado', 'tiempo_real'),
+            'classes': ('collapse',)
+        }),
+        ('Dependencias', {
+            'fields': ('dependencias',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('created_at', 'updated_at', 'vencida_display'),
+            'classes': ('collapse',)
+        })
+    )
+
+
+@admin.register(MiembroProyecto)
+class MiembroProyectoAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'proyecto', 'rol', 'fecha_incorporacion', 'activo']
+    list_filter = ['rol', 'activo', 'fecha_incorporacion']
+    search_fields = ['usuario__username', 'proyecto__nombre']
+    autocomplete_fields = ['usuario', 'proyecto']

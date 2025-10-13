@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tarea.titulo }} - ADICLA</title>
+    {% load static %}
+    {% load proyecto_tags %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📋 Detalle de Tarea - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Navigation Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <nav class="breadcrumb">
+                    <a href="{% url 'tareas_dashboard' %}">Dashboard</a> &gt;
+                    <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}">{{ tarea.proyecto.nombre }}</a> &gt;
+                    <span>{{ tarea.titulo }}</span>
+                </nav>
+            </div>
+            <div class="actions-right">
+                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-action-secondary">✏️ Editar Tarea</a>
+                    <a href="{% url 'tarea_eliminar' tarea.id %}" class="btn-action-secondary">🗑️ Eliminar</a>
+                {% endif %}
+                <a href="{% url 'tareas_lista' %}" class="btn-action-secondary">📋 Ver Todas</a>
+            </div>
+        </section>
+
+        <!-- Task Detail -->
+        <section class="task-detail-section">
+            <div class="task-detail-container">
+                <!-- Left Column: Main Info -->
+                <div class="task-main-info">
+                    <div class="task-header-detail">
+                        <div class="task-title-group">
+                            <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                            <h1 class="task-title-main">{{ tarea.titulo }}</h1>
+                        </div>
+                        
+                        <div class="task-status-group">
+                            <div class="status-badge status-{{ tarea.estado }}">
+                                {{ tarea.get_estado_display }}
+                            </div>
+                            {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user or user in tarea.asignados.all %}
+                                <select class="status-change-select" data-task-id="{{ tarea.id }}">
+                                    {% for codigo, nombre in estados_disponibles %}
+                                        <option value="{{ codigo }}" {% if tarea.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <span class="status-display">{{ tarea.get_estado_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="task-project-info">
+                        <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}" class="project-link">
+                            <span class="project-badge-large">{{ tarea.proyecto.icono }} {{ tarea.proyecto.nombre }}</span>
+                        </a>
+                    </div>
+
+                    <!-- Información de Fechas -->
+                    <div class="task-dates-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff;">
+                        <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">📅 Creada</div>
+                                <div style="font-weight: 600; color: #374151;">{{ tarea.created_at|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.created_at|timesince }}</div>
+                            </div>
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">🔄 Última modificación</div>
+                                <div style="font-weight: 600; color: #374151;">{{ tarea.updated_at|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.updated_at|timesince }}</div>
+                            </div>
+                            {% if tarea.fecha_completada %}
+                            <div class="date-info-item">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 4px;">✅ Completada</div>
+                                <div style="font-weight: 600; color: #16a34a;">{{ tarea.fecha_completada|date:"d/m/Y H:i" }}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">Hace {{ tarea.fecha_completada|timesince }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if tarea.descripcion %}
+                    <div class="task-description-full">
+                        <h3>📝 Descripción</h3>
+                        <div class="description-content">
+                            {{ tarea.descripcion|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if tarea.get_tags_list %}
+                    <div class="task-tags-section">
+                        <h3>🏷️ Etiquetas</h3>
+                        <div class="tags-container">
+                            {% for tag in tarea.get_tags_list %}
+                                <span class="tag-large">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Right Column: Details -->
+                <div class="task-details-sidebar">
+                    <div class="detail-card">
+                        <h3>ℹ️ Información General</h3>
+                        
+                        <div class="detail-item">
+                            <label>👤 Creado por:</label>
+                            <span>{{ tarea.creador.get_full_name|default:tarea.creador.username }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>📅 Fecha de creación:</label>
+                            <span>{{ tarea.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <label>🔄 Última modificación:</label>
+                            <span>{{ tarea.updated_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                        
+                        {% if tarea.fecha_vencimiento %}
+                        <div class="detail-item">
+                            <label>⏰ Fecha de vencimiento:</label>
+                            {% if tarea.esta_vencida %}
+                                <span class="text-danger">🚨 {{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }} (Vencida)</span>
+                            {% else %}
+                                <span>{{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="detail-item">
+                            <label>⚡ Prioridad:</label>
+                            <span class="priority-text priority-{{ tarea.prioridad }}">
+                                {{ tarea.get_prioridad_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-card">
+                        <h3>👥 Asignaciones</h3>
+                        
+                        {% if tarea.asignados.exists %}
+                            <div class="assigned-users-list">
+                                {% for asignado in tarea.asignados.all %}
+                                    <div class="assigned-user-item">
+                                        <div class="user-avatar">
+                                            {{ asignado.first_name.0|default:asignado.username.0|upper }}
+                                        </div>
+                                        <div class="user-details">
+                                            <div class="user-name">{{ asignado.get_full_name|default:asignado.username }}</div>
+                                            <div class="user-email">{{ asignado.email }}</div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="no-assignments">
+                                <p>Esta tarea no está asignada a ningún usuario.</p>
+                                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini">Asignar usuarios</a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Progress Section -->
+                    <div class="detail-card">
+                        <h3>📊 Progreso</h3>
+                        
+                        <div class="progress-visual">
+                            {% if tarea.estado == 'pendiente' %}
+                                <div class="progress-circle pending">
+                                    <span>⏳</span>
+                                    <small>Pendiente</small>
+                                </div>
+                            {% elif tarea.estado == 'en_progreso' %}
+                                <div class="progress-circle in-progress">
+                                    <span>⚡</span>
+                                    <small>En Progreso</small>
+                                </div>
+                            {% elif tarea.estado == 'completada' %}
+                                <div class="progress-circle completed">
+                                    <span>✅</span>
+                                    <small>Completada</small>
+                                </div>
+                            {% elif tarea.estado == 'cancelada' %}
+                                <div class="progress-circle cancelled">
+                                    <span>❌</span>
+                                    <small>Cancelada</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="progress-timeline">
+                            <div class="timeline-item {% if tarea.fecha_creacion %}completed{% endif %}">
+                                <div class="timeline-marker">📝</div>
+                                <div class="timeline-content">
+                                    <strong>Tarea creada</strong>
+                                    <small>{{ tarea.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            
+                            {% if tarea.estado == 'en_progreso' or tarea.estado == 'completada' %}
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker">⚡</div>
+                                <div class="timeline-content">
+                                    <strong>En progreso</strong>
+                                    <small>Estado actualizado</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if tarea.estado == 'completada' %}
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker">✅</div>
+                                <div class="timeline-content">
+                                    <strong>Completada</strong>
+                                    <small>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if tarea.estado == 'cancelada' %}
+                            <div class="timeline-item cancelled">
+                                <div class="timeline-marker">❌</div>
+                                <div class="timeline-content">
+                                    <strong>Cancelada</strong>
+                                    <small>{{ tarea.fecha_modificacion|date:"d/m/Y H:i" }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Files Section -->
+        <section class="files-section">
+            <h2>📎 Archivos de la Tarea</h2>
+            
+            <!-- File Upload Form -->
+            <div class="comment-form-container">
+                <h3>📤 Subir Archivo</h3>
+                <form method="post" enctype="multipart/form-data" action="{% url 'tarea_archivo_crear' tarea.id %}" class="comment-form">
+                    {% csrf_token %}
+                    {{ form_archivo.as_p }}
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">📎 Subir Archivo</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Files Grid -->
+            {% if archivos %}
+                <div class="files-grid">
+                    {% for archivo in archivos %}
+                        <div class="file-card">
+                            <div class="file-icon">{{ archivo.get_icono }}</div>
+                            <div class="file-info">
+                                <h4 class="file-name">{{ archivo.nombre_original }}</h4>
+                                <p class="file-details">{{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}</p>
+                                <p class="file-uploader">Subido por {{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</p>
+                                {% if archivo.descripcion %}
+                                    <p class="file-description">"{{ archivo.descripcion }}"</p>
+                                {% endif %}
+                            </div>
+                            <div class="file-actions">
+                                <a href="{% url 'archivo_descargar' tipo='tarea' archivo_id=archivo.id %}" class="btn-file-action">⬇️ Descargar</a>
+                                {% if archivo.puede_previsualizar %}
+                                    <a href="{% url 'archivo_previsualizar' tipo='tarea' archivo_id=archivo.id %}" target="_blank" class="btn-file-action">👁️ Ver</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-comments">
+                    <div class="empty-icon">📎</div>
+                    <h3>No hay archivos</h3>
+                    <p>Sé el primero en subir un archivo para esta tarea.</p>
+                </div>
+            {% endif %}
+        </section>
+        
+        <!-- Comments Section -->
+        <section class="comments-section">
+            <h2>💬 Comentarios de la Tarea</h2>
+            
+            <!-- Comment Form -->
+            <div class="comment-form-container">
+                <h3>✏️ Agregar Comentario</h3>
+                <form method="post" enctype="multipart/form-data" action="{% url 'comentario_tarea_crear' tarea.id %}" class="comment-form">
+                    {% csrf_token %}
+                    {{ form_comentario.as_p }}
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">💬 Enviar Comentario</button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Comments List -->
+            {% if comentarios %}
+                <div class="comments-list">
+                    {% for comentario in comentarios %}
+                        <div class="comment-thread">
+                            <!-- Main Comment -->
+                            <div class="comment-main">
+                                <div class="comment-avatar">
+                                    {{ comentario.autor.first_name.0|default:comentario.autor.username.0|upper }}
+                                </div>
+                                <div class="comment-content">
+                                    <div class="comment-header">
+                                        <span class="comment-author">{{ comentario.autor.get_full_name|default:comentario.autor.username }}</span>
+                                        <span class="comment-date">{{ comentario.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <div class="comment-text">
+                                        {{ comentario.contenido|linebreaks }}
+                                    </div>
+                                    
+                                    <!-- Comment Files -->
+                                    {% if comentario.archivos.exists %}
+                                        <div class="comment-files">
+                                            <strong>📎 Archivos adjuntos:</strong>
+                                            {% for archivo in comentario.archivos.all %}
+                                                <div class="comment-file">
+                                                    <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre_original }}</a>
+                                                    <span class="file-size">{{ archivo.get_tamaño_legible }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="comment-actions">
+                                        <button class="btn-reply" onclick="toggleReplyForm('reply-form-{{ comentario.id }}')">↩️ Responder</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Reply Form -->
+                            <div id="reply-form-{{ comentario.id }}" class="reply-form-container" style="display: none;">
+                                <form method="post" enctype="multipart/form-data" action="{% url 'comentario_tarea_crear' tarea.id %}" class="reply-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="comentario_padre" value="{{ comentario.id }}">
+                                    <textarea name="contenido" placeholder="Escribe tu respuesta..." required></textarea>
+                                    <input type="file" name="archivo" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif">
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-comment-small">💬 Responder</button>
+                                        <button type="button" class="btn-cancel-small" onclick="toggleReplyForm('reply-form-{{ comentario.id }}')">❌ Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- Replies -->
+                            {% for respuesta in comentario.respuestas.all %}
+                                <div class="comment-reply">
+                                    <div class="comment-avatar">
+                                        {{ respuesta.autor.first_name.0|default:respuesta.autor.username.0|upper }}
+                                    </div>
+                                    <div class="comment-content">
+                                        <div class="comment-header">
+                                            <span class="comment-author">{{ respuesta.autor.get_full_name|default:respuesta.autor.username }}</span>
+                                            <span class="comment-date">{{ respuesta.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div class="comment-text">
+                                            {{ respuesta.contenido|linebreaks }}
+                                        </div>
+                                        
+                                        <!-- Reply Files -->
+                                        {% if respuesta.archivos.exists %}
+                                            <div class="comment-files">
+                                                <strong>📎 Archivos adjuntos:</strong>
+                                                {% for archivo in respuesta.archivos.all %}
+                                                    <div class="comment-file">
+                                                        <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                                        <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">{{ archivo.nombre_original }}</a>
+                                                        <span class="file-size">{{ archivo.get_tamaño_legible }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-comments">
+                    <div class="empty-icon">💬</div>
+                    <h3>No hay comentarios</h3>
+                    <p>Sé el primero en comentar sobre esta tarea.</p>
+                </div>
+            {% endif %}
+        </section>
+        
+        <!-- Related Tasks -->
+        {% if tareas_relacionadas %}
+        <section class="related-tasks-section">
+            <h2>🔗 Otras tareas del proyecto</h2>
+            <div class="related-tasks-grid">
+                {% for tarea_rel in tareas_relacionadas %}
+                    <div class="related-task-card">
+                        <div class="task-priority priority-{{ tarea_rel.prioridad }}"></div>
+                        <h4><a href="{% url 'tarea_detalle' tarea_id=tarea_rel.pk %}">{{ tarea_rel.titulo }}</a></h4>
+                        <div class="task-status status-{{ tarea_rel.estado }}">{{ tarea_rel.get_estado_display }}</div>
+                        {% if tarea_rel.fecha_vencimiento %}
+                            <small>📅 {{ tarea_rel.fecha_vencimiento|date:"d/m" }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <script>
+        // Script para cambiar estado de la tarea
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.querySelector('.status-change-select');
+            
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const newStatus = this.value;
+                    
+                    fetch(`/tareas/tarea/${taskId}/estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken')
+                        },
+                        body: `estado=${newStatus}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Actualizar la página para mostrar los cambios
+                            location.reload();
+                        } else {
+                            alert('Error al cambiar el estado: ' + (data.error || 'Error desconocido'));
+                            // Revertir la selección
+                            this.selectedIndex = 0;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión');
+                        this.selectedIndex = 0;
+                    });
+                });
+            }
+        });
+        
+        // Función para obtener el token CSRF de las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Función para mostrar/ocultar formularios de respuesta
+        function toggleReplyForm(formId) {
+            const form = document.getElementById(formId);
+            if (form) {
+                if (form.style.display === 'none' || form.style.display === '') {
+                    form.style.display = 'block';
+                    // Enfocar el textarea
+                    const textarea = form.querySelector('textarea');
+                    if (textarea) {
+                        textarea.focus();
+                    }
+                } else {
+                    form.style.display = 'none';
+                    // Limpiar el formulario
+                    const textarea = form.querySelector('textarea');
+                    const fileInput = form.querySelector('input[type="file"]');
+                    if (textarea) textarea.value = '';
+                    if (fileInput) fileInput.value = '';
+                }
+            }
+        }
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Funcionalidad para cambiar estado de tarea en detalle
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.querySelector('.status-change-select');
+            
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    const tareaId = this.dataset.taskId;
+                    const nuevoEstado = this.value;
+                    const selectElement = this;
+                    
+                    // Mostrar indicador de carga
+                    selectElement.style.opacity = '0.6';
+                    selectElement.disabled = true;
+                    
+                    // Enviar solicitud AJAX
+                    fetch(`/tareas/api/tarea/${tareaId}/cambiar-estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: `estado=${nuevoEstado}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showMessage(data.message, 'success');
+                            
+                            // Actualizar el badge de estado visualmente
+                            updateStatusBadge(nuevoEstado);
+                        } else {
+                            showMessage(data.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('Error de conexión. Intenta nuevamente.', 'error');
+                    })
+                    .finally(() => {
+                        selectElement.style.opacity = '1';
+                        selectElement.disabled = false;
+                    });
+                });
+            }
+        });
+        
+        // Función para obtener cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Función para mostrar mensajes
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible`;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                padding: 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+            `;
+            messageDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="
+                    float: right; 
+                    background: none; 
+                    border: none; 
+                    font-size: 18px; 
+                    cursor: pointer;
+                    margin-left: 10px;
+                ">&times;</button>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Actualizar badge de estado
+        function updateStatusBadge(nuevoEstado) {
+            const statusBadge = document.querySelector('.status-badge');
+            if (statusBadge) {
+                statusBadge.className = `status-badge status-${nuevoEstado}`;
+                const estadosTexto = {
+                    'pendiente': 'Pendiente',
+                    'en_proceso': 'En Proceso', 
+                    'en_revision': 'En Revisión',
+                    'completada': 'Completada'
+                };
+                statusBadge.textContent = estadosTexto[nuevoEstado] || nuevoEstado;
+            }
+        }
+    </script>
+</body>
+</html>

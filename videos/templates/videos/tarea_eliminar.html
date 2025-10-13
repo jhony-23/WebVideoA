@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Tarea - {{ tarea.titulo }} - ADICLA</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">🗑️ Eliminar Tarea - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Navigation Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <nav class="breadcrumb">
+                    <a href="{% url 'tareas_dashboard' %}">Dashboard</a> &gt;
+                    <a href="{% url 'proyecto_detalle' tarea.proyecto.pk %}">{{ tarea.proyecto.nombre }}</a> &gt;
+                    <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a> &gt;
+                    <span>Eliminar</span>
+                </nav>
+            </div>
+            <div class="actions-right">
+                <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-action-secondary">🔙 Cancelar</a>
+            </div>
+        </section>
+
+        <!-- Delete Confirmation -->
+        <section class="form-section">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2 class="form-title">⚠️ Confirmar Eliminación</h2>
+                    <p class="form-subtitle">¿Estás seguro de que deseas eliminar esta tarea?</p>
+                </div>
+                
+                <!-- Task Info -->
+                <div class="task-info-card" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                    <h3 style="color: #495057; margin-bottom: 15px;">📋 {{ tarea.titulo }}</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <strong>Proyecto:</strong> {{ tarea.proyecto.nombre }}
+                        </div>
+                        <div>
+                            <strong>Estado:</strong> 
+                            <span class="task-status task-status-{{ tarea.estado }}">
+                                {{ tarea.get_estado_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Prioridad:</strong> 
+                            <span class="task-priority task-priority-{{ tarea.prioridad }}">
+                                {{ tarea.get_prioridad_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>Creada:</strong> {{ tarea.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    {% if tarea.descripcion %}
+                        <div>
+                            <strong>Descripción:</strong>
+                            <p style="margin-top: 8px; color: #6c757d;">{{ tarea.descripcion|truncatewords:20 }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Warning Message -->
+                <div class="alert alert-danger" style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 6px; padding: 15px; margin-bottom: 25px; color: #721c24;">
+                    <h4 style="margin-bottom: 10px;">⚠️ Advertencia</h4>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li>Esta acción no se puede deshacer</li>
+                        <li>Se eliminarán todos los datos asociados a la tarea</li>
+                        <li>Las dependencias con otras tareas se removerán</li>
+                    </ul>
+                </div>
+                
+                <!-- Form -->
+                <form method="post" style="text-align: center;">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-secondary" style="margin-right: 15px;">
+                            🔙 Cancelar
+                        </a>
+                        <button type="submit" class="btn-danger" onclick="return confirm('¿Estás COMPLETAMENTE SEGURO de eliminar esta tarea?')">
+                            🗑️ Sí, Eliminar Tarea
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+    
+    <style>
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c82333, #bd2130);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+        
+        .task-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .task-status-pendiente { background: #fff3cd; color: #856404; }
+        .task-status-en_proceso { background: #cce5ff; color: #004085; }
+        .task-status-en_revision { background: #e2e3e5; color: #383d41; }
+        .task-status-completada { background: #d4edda; color: #155724; }
+        
+        .task-priority {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .task-priority-baja { background: #d1ecf1; color: #0c5460; }
+        .task-priority-media { background: #fff3cd; color: #856404; }
+        .task-priority-alta { background: #f8d7da; color: #721c24; }
+        .task-priority-critica { background: #f5c6cb; color: #721c24; }
+    </style>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

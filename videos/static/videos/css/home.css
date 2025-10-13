@@ -85,3 +85,36 @@ img#image-player {
     border-radius: 5px;
     z-index: 10;
 }
+
+/* Contenedor para medios duplicados (verticales) */
+.media-duplicate-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    background-color: black;
+}
+
+/* Cada media duplicado ocupa exactamente la mitad */
+.media-duplicate {
+    width: 50vw;
+    height: 100vh;
+    object-fit: cover;
+    background-color: black;
+}
+
+/* Indicador de buffering para duplicados */
+.duplicate-buffer-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 1.5em;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 15;
+}

@@ -1,0 +1,385 @@
+/* 🎨 Paleta principal
+   Azul oscuro: #0a2540
+   Azul medio: #1d4ed8
+   Azul claro: #60a5fa
+   Gris claro: #f3f4f6
+   Blanco: #ffffff
+*/
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Body */
+body {
+    background: #f3f4f6;
+    color: #0a2540;
+    line-height: 1.6;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(90deg, #1d4ed8, #2563eb);
+    color: #fff;
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.user-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-welcome {
+    font-weight: 500;
+}
+
+.btn-logout {
+    background: #0a2540;
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.btn-logout:hover {
+    background: #1d4ed8;
+}
+
+/* Main Content */
+.main-content {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* Actions Bar */
+.actions-bar {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.actions-left h1 {
+    color: #1d4ed8;
+    margin-bottom: 0.3rem;
+}
+
+.actions-left p {
+    color: #555;
+}
+
+.btn-action {
+    background: #1d4ed8;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.3s;
+}
+
+.btn-action:hover {
+    background: #2563eb;
+}
+
+/* Filters */
+.filters-section {
+    margin-bottom: 2rem;
+}
+
+.filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.search-input, 
+.filter-select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-input:focus,
+.filter-select:focus {
+    border-color: #1d4ed8;
+}
+
+.btn-filter, .btn-clear {
+    background: #1d4ed8;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-clear {
+    background: #6b7280;
+}
+
+.btn-filter:hover { background: #2563eb; }
+.btn-clear:hover { background: #4b5563; }
+
+/* Projects Grid */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Project Card */
+.project-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+}
+
+/* Header */
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.project-info h3 {
+    margin-bottom: 0.2rem;
+    font-size: 1.1rem;
+}
+
+.project-info a {
+    color: #1d4ed8;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.project-info a:hover {
+    text-decoration: underline;
+}
+
+.project-code {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.status-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-EN { background: #1d4ed8; }
+.status-IN { background: #facc15; color: #000; }
+.status-FI { background: #22c55e; }
+
+/* Description */
+.project-description {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Progress */
+.project-progress {
+    margin-top: 0.5rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+}
+
+.progress-bar {
+    background: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.progress-fill {
+    height: 8px;
+    background: linear-gradient(90deg, #60a5fa, #1d4ed8);
+    transition: width 0.6s ease;
+}
+
+/* Stats */
+.project-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.stat-number {
+    font-weight: bold;
+    font-size: 1rem;
+    display: block;
+    color: #1d4ed8;
+}
+
+/* Meta */
+.project-meta {
+    font-size: 0.8rem;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Actions */
+.project-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: auto;
+}
+
+.btn-primary {
+    background: #1d4ed8;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: background 0.3s;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #0a2540;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover { background: #2563eb; }
+.btn-secondary:hover { background: #e5e7eb; }
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Estilos para formularios inline */
+.inline-form {
+    display: flex;
+    width: 100%;
+}
+
+.inline-form .search-input {
+    border-radius: 25px 0 0 25px;
+    border-right: none;
+}
+
+.inline-form button {
+    border-radius: 0 25px 25px 0;
+    border: 2px solid #3498db;
+    border-left: none;
+    background: #3498db;
+    color: white;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.inline-form button:hover {
+    background: #2980b9;
+    border-color: #2980b9;
+}
+
+/* Mejoras para el header */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.user-welcome {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Ajustes para los filtros */
+.filters-form {
+    background: rgba(52, 152, 219, 0.05);
+    padding: 1.5rem;
+    border-radius: 15px;
+    border: 2px solid rgba(52, 152, 219, 0.1);
+}
+
+/* Mejoras para los grupos de acciones */
+.actions-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Animación de carga para las barras de progreso */
+@keyframes progressLoad {
+    from {
+        width: 0%;
+    }
+}
+
+.progreso-fill {
+    animation: progressLoad 1.5s ease-out forwards;
+}

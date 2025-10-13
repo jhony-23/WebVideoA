@@ -5,10 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Reproductor de Medios - Carrusel</title>
-    <link rel="icon" type="image/svg+xml" href="{% static 'videos/img/favicon_institucion.svg' %}?v=3">
-    <link rel="icon" type="image/x-icon" href="{% static 'videos/img/favicon.ico' %}?v=3">
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="stylesheet" href="{% static 'videos/css/home.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/home.css' %}?v=2.0">
 </head>
 
 <body>
@@ -81,6 +80,15 @@
                 const media = data.current_media;
                 const elapsed = data.elapsed;
                 const duration = data.duration;
+                
+                // Debug: mostrar datos recibidos
+                console.log('Datos recibidos:', {
+                    media: media,
+                    elapsed: elapsed,
+                    duration: duration,
+                    index: data.current_index,
+                    total: data.total_items
+                });
 
                 // Mostrar estado LIVE
                 setStatus(`🔴 LIVE - ${media.title} (${data.current_index + 1}/${data.total_items})`, 'live');
@@ -101,10 +109,29 @@
         function playCurrentMedia(media, startFrom = 0) {
             stopCurrentMedia();
             
-            if (media.media_type === 'video') {
-                playVideo(media, startFrom);
-            } else if (media.media_type === 'image') {
-                playImage(media, startFrom);
+            // Detectar si es vertical (height > width)
+            const isVertical = media.height && media.width && media.height > media.width;
+            console.log(`🎬 DUPLICADO CHECK: Media "${media.title}": ${media.width}x${media.height}, Vertical: ${isVertical}`);
+            
+            // Debug visual en el banner
+            if (isVertical) {
+                setStatus(`🔄 DUPLICANDO: ${media.title} (${media.width}x${media.height})`, 'info');
+            }
+            
+            if (isVertical) {
+                // Duplicar medios verticales
+                if (media.media_type === 'video') {
+                    playDuplicateVideo(media, startFrom);
+                } else if (media.media_type === 'image') {
+                    playDuplicateImage(media, startFrom);
+                }
+            } else {
+                // Medios horizontales normales
+                if (media.media_type === 'video') {
+                    playVideo(media, startFrom);
+                } else if (media.media_type === 'image') {
+                    playImage(media, startFrom);
+                }
             }
         }
 
@@ -113,7 +140,7 @@
             bufferIndicator.style.display = 'block';
             videoPlayer.style.display = 'block';
 
-            const videoUrl = media.stream_url || media.file;
+            const videoUrl = media.stream_url || media.file_url || media.file;
 
             // Si es HLS
             if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
@@ -157,7 +184,8 @@
         }
 
         function playVideoTag(media, startFrom = 0) {
-            videoPlayer.src = media.file;
+            const videoUrl = media.file_url || media.stream_url || media.file;
+            videoPlayer.src = videoUrl;
             videoPlayer.oncanplay = function () {
                 bufferIndicator.style.display = 'none';
                 videoPlayer.currentTime = startFrom;
@@ -172,20 +200,188 @@
             if (hls) { hls.destroy(); hls = null; }
             videoPlayer.style.display = 'none';
             bufferIndicator.style.display = 'none';
-            imagePlayer.src = media.file;
+            
+            // Usar la URL correcta para imágenes
+            const imageUrl = media.file_url || media.stream_url || media.file;
+            console.log('Cargando imagen:', imageUrl); // Debug
+            
+            imagePlayer.src = imageUrl;
             imagePlayer.style.display = 'block';
+            
+            // Manejar errores de carga de imagen
+            imagePlayer.onerror = function() {
+                console.error('Error cargando imagen:', imageUrl);
+                setStatus('❌ Error cargando imagen', 'error');
+            };
+            
+            imagePlayer.onload = function() {
+                console.log('Imagen cargada correctamente:', imageUrl);
+            };
+        }
+
+        function playDuplicateVideo(media, startFrom = 0) {
+            // Ocultar reproductores normales
+            imagePlayer.style.display = 'none';
+            videoPlayer.style.display = 'none';
+            bufferIndicator.style.display = 'block';
+            
+            // Crear contenedor duplicado
+            const container = createDuplicateContainer();
+            const videoUrl = media.stream_url || media.file_url || media.file;
+            
+            // Crear dos videos idénticos
+            const video1 = document.createElement('video');
+            const video2 = document.createElement('video');
+            
+            [video1, video2].forEach(video => {
+                video.className = 'media-duplicate';
+                video.autoplay = true;
+                video.playsinline = true;
+                video.preload = 'auto';
+                video.muted = true; // Evitar problemas de autoplay
+                container.appendChild(video);
+            });
+            
+            // Si es HLS y está soportado
+            if (videoUrl.endsWith('.m3u8') && Hls.isSupported()) {
+                setupDuplicateHLS(video1, video2, videoUrl, startFrom);
+            } else {
+                setupDuplicateVideo(video1, video2, videoUrl, startFrom);
+            }
+        }
+        
+        function playDuplicateImage(media, startFrom = 0) {
+            // Ocultar reproductores normales
+            if (hls) { hls.destroy(); hls = null; }
+            videoPlayer.style.display = 'none';
+            imagePlayer.style.display = 'none';
+            bufferIndicator.style.display = 'none';
+            
+            // Crear contenedor duplicado
+            const container = createDuplicateContainer();
+            const imageUrl = media.file_url || media.stream_url || media.file;
+            
+            // Crear dos imágenes idénticas
+            const img1 = document.createElement('img');
+            const img2 = document.createElement('img');
+            
+            [img1, img2].forEach(img => {
+                img.className = 'media-duplicate';
+                img.src = imageUrl;
+                img.alt = media.title;
+                container.appendChild(img);
+                
+                img.onerror = function() {
+                    console.error('Error cargando imagen duplicada:', imageUrl);
+                    setStatus('❌ Error cargando imagen', 'error');
+                };
+                
+                img.onload = function() {
+                    console.log('Imagen duplicada cargada correctamente:', imageUrl);
+                };
+            });
+        }
+        
+        function createDuplicateContainer() {
+            // Remover contenedor duplicado existente si existe
+            const existing = document.querySelector('.media-duplicate-container');
+            if (existing) {
+                existing.remove();
+            }
+            
+            // Crear nuevo contenedor
+            const container = document.createElement('div');
+            container.className = 'media-duplicate-container';
+            document.getElementById('media-container').appendChild(container);
+            
+            return container;
+        }
+        
+        function setupDuplicateHLS(video1, video2, videoUrl, startFrom) {
+            let hls1, hls2;
+            let loadedCount = 0;
+            
+            const onManifestParsed = () => {
+                loadedCount++;
+                if (loadedCount === 2) {
+                    bufferIndicator.style.display = 'none';
+                    video1.currentTime = startFrom;
+                    video2.currentTime = startFrom;
+                    video1.play().catch(console.warn);
+                    video2.play().catch(console.warn);
+                }
+            };
+            
+            // Configurar HLS para video1
+            hls1 = new Hls();
+            hls1.loadSource(videoUrl);
+            hls1.attachMedia(video1);
+            hls1.on(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+            
+            // Configurar HLS para video2  
+            hls2 = new Hls();
+            hls2.loadSource(videoUrl);
+            hls2.attachMedia(video2);
+            hls2.on(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+            
+            // Guardar referencias para limpiar después
+            window.duplicateHls1 = hls1;
+            window.duplicateHls2 = hls2;
+        }
+        
+        function setupDuplicateVideo(video1, video2, videoUrl, startFrom) {
+            let loadedCount = 0;
+            
+            const onCanPlay = () => {
+                loadedCount++;
+                if (loadedCount === 2) {
+                    bufferIndicator.style.display = 'none';
+                    video1.currentTime = startFrom;
+                    video2.currentTime = startFrom;
+                    video1.play().catch(console.warn);
+                    video2.play().catch(console.warn);
+                }
+            };
+            
+            video1.src = videoUrl;
+            video2.src = videoUrl;
+            
+            video1.oncanplay = onCanPlay;
+            video2.oncanplay = onCanPlay;
+            
+            video1.load();
+            video2.load();
         }
 
         function stopCurrentMedia() {
+            // Limpiar HLS normal
             if (hls) {
                 hls.destroy();
                 hls = null;
             }
+            
+            // Limpiar HLS duplicados
+            if (window.duplicateHls1) {
+                window.duplicateHls1.destroy();
+                window.duplicateHls1 = null;
+            }
+            if (window.duplicateHls2) {
+                window.duplicateHls2.destroy();
+                window.duplicateHls2 = null;
+            }
+            
+            // Limpiar reproductores normales
             videoPlayer.pause();
             videoPlayer.src = '';
             videoPlayer.style.display = 'none';
             imagePlayer.style.display = 'none';
             bufferIndicator.style.display = 'none';
+            
+            // Remover contenedor duplicado
+            const duplicateContainer = document.querySelector('.media-duplicate-container');
+            if (duplicateContainer) {
+                duplicateContainer.remove();
+            }
         }
 
         function requestFullScreen(element) {

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tareas - ADICLA</title>
+    {% load static %}
+    {% load proyecto_tags %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📋 Mis Tareas - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Actions Bar -->
+        <section class="actions-bar">
+            <div class="actions-left">
+                <h1>📋 Gestión de Tareas</h1>
+                <p>Administra todas tus tareas asignadas y creadas</p>
+            </div>
+            <div class="actions-right">
+                <a href="{% url 'tarea_crear' %}" class="btn-action-secondary">➕ Nueva Tarea</a>
+                <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📊 Ver Proyectos</a>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters-section">
+            <form method="get" class="filters-form">
+                <div class="filter-group">
+                    <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Buscar tareas..." class="search-input">
+                </div>
+                <div class="filter-group">
+                    <select name="estado" class="filter-select">
+                        <option value="">Todos los estados</option>
+                        {% for codigo, nombre in estados_disponibles %}
+                            <option value="{{ codigo }}" {% if estado_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="prioridad" class="filter-select">
+                        <option value="">Todas las prioridades</option>
+                        {% for codigo, nombre in prioridades_disponibles %}
+                            <option value="{{ codigo }}" {% if prioridad_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select name="proyecto" class="filter-select">
+                        <option value="">Todos los proyectos</option>
+                        {% for proyecto in proyectos_disponibles %}
+                            <option value="{{ proyecto.pk }}" {% if proyecto_filtro == proyecto.pk|stringformat:"s" %}selected{% endif %}>{{ proyecto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button type="submit" class="btn-filter">Filtrar</button>
+                    {% if busqueda or estado_filtro or prioridad_filtro or proyecto_filtro %}
+                        <a href="{% url 'tareas_lista' %}" class="btn-clear">Limpiar</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+
+        <!-- Tasks List -->
+        <section class="tasks-section">
+            {% if tareas %}
+                <div class="tasks-kanban">
+                    {% for tarea in tareas %}
+                    <div class="task-card" data-task-id="{{ tarea.id }}">
+                        <div class="task-header">
+                            <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                            <div class="task-actions">
+                                <div class="task-status-dropdown">
+                                    <select class="status-select" data-task-id="{{ tarea.id }}">
+                                        {% for codigo, nombre in estados_disponibles %}
+                                            <option value="{{ codigo }}" {% if tarea.estado == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="task-content">
+                            <h3 class="task-title">
+                                <a href="{% url 'tarea_detalle' tarea.id %}">{{ tarea.titulo }}</a>
+                            </h3>
+                            
+                            <div class="task-project">
+                                <span class="project-badge">{{ tarea.proyecto.icono }} {{ tarea.proyecto.nombre }}</span>
+                            </div>
+                            
+                            {% if tarea.descripcion %}
+                            <div class="task-description">
+                                <p>{{ tarea.descripcion|truncatewords:15 }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="task-meta">
+                                {% if tarea.fecha_vencimiento %}
+                                <div class="task-due">
+                                    {% if tarea.esta_vencida %}
+                                        <span class="due-overdue">🚨 Vencida hace {{ tarea.fecha_vencimiento|timesince }}</span>
+                                    {% else %}
+                                        <span class="due-normal">📅 Vence {{ tarea.fecha_vencimiento|timeuntil }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="task-assigned">
+                                    {% for asignado in tarea.asignados.all %}
+                                        <span class="assigned-user" title="{{ asignado.get_full_name|default:asignado.username }}">
+                                            {{ asignado.first_name.0|default:asignado.username.0|upper }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="no-assigned">Sin asignar</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            {% if tarea.get_tags_list %}
+                            <div class="task-tags">
+                                {% for tag in tarea.get_tags_list %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="task-footer">
+                            <div class="task-actions-buttons">
+                                <a href="{% url 'tarea_detalle' tarea.id %}" class="btn-mini" title="Ver detalle">👁️</a>
+                                {% if tarea.creador == user or tarea.proyecto|puede_gestionar:user %}
+                                    <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini" title="Editar">✏️</a>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="task-creator">
+                                <small>Por {{ tarea.creador.first_name|default:tarea.creador.username }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No hay tareas</h3>
+                    {% if busqueda or estado_filtro or prioridad_filtro or proyecto_filtro %}
+                        <p>No se encontraron tareas con los filtros aplicados.</p>
+                        <a href="{% url 'tareas_lista' %}" class="btn-action-secondary">Ver todas las tareas</a>
+                    {% else %}
+                        <p>¡Aún no tienes tareas! Crea tu primera tarea para empezar.</p>
+                        <a href="{% url 'tarea_crear' %}" class="btn-action-secondary">➕ Crear mi primera tarea</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        // Script para cambiar estados de tareas vía AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelects = document.querySelectorAll('.status-select');
+            
+            statusSelects.forEach(function(select) {
+                select.addEventListener('change', function() {
+                    const taskId = this.getAttribute('data-task-id');
+                    const newStatus = this.value;
+                    
+                    fetch(`/tareas/tarea/${taskId}/estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value || getCookie('csrftoken')
+                        },
+                        body: `estado=${newStatus}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mostrar confirmación visual
+                            const card = document.querySelector(`[data-task-id="${taskId}"]`);
+                            card.style.transform = 'scale(1.05)';
+                            setTimeout(() => {
+                                card.style.transform = 'scale(1)';
+                            }, 200);
+                        } else {
+                            alert('Error al cambiar el estado: ' + (data.error || 'Error desconocido'));
+                            // Revertir la selección
+                            this.selectedIndex = 0;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error de conexión');
+                        this.selectedIndex = 0;
+                    });
+                });
+            });
+        });
+        
+        // Función para obtener el token CSRF de las cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Funcionalidad para cambiar estado de tareas via AJAX
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelects = document.querySelectorAll('.status-select');
+            
+            statusSelects.forEach(select => {
+                select.addEventListener('change', function() {
+                    const tareaId = this.dataset.taskId;
+                    const nuevoEstado = this.value;
+                    const selectElement = this;
+                    
+                    // Mostrar indicador de carga
+                    selectElement.style.opacity = '0.6';
+                    selectElement.disabled = true;
+                    
+                    // Enviar solicitud AJAX
+                    fetch(`/tareas/api/tarea/${tareaId}/cambiar-estado/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: `estado=${nuevoEstado}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mostrar mensaje de éxito
+                            showMessage(data.message, 'success');
+                            
+                            // Actualizar visual del card si es necesario
+                            updateTaskCardVisual(tareaId, nuevoEstado);
+                        } else {
+                            // Error: revertir el select
+                            showMessage(data.error, 'error');
+                            // Aquí podrías revertir al valor anterior si lo guardaste
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('Error de conexión. Intenta nuevamente.', 'error');
+                    })
+                    .finally(() => {
+                        // Restaurar select
+                        selectElement.style.opacity = '1';
+                        selectElement.disabled = false;
+                    });
+                });
+            });
+        });
+        
+        // Función para obtener cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Función para mostrar mensajes
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible`;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                padding: 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                background: ${type === 'success' ? '#d4edda' : '#f8d7da'};
+                border: 1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};
+                color: ${type === 'success' ? '#155724' : '#721c24'};
+            `;
+            messageDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="
+                    float: right; 
+                    background: none; 
+                    border: none; 
+                    font-size: 18px; 
+                    cursor: pointer;
+                    margin-left: 10px;
+                ">&times;</button>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            // Auto-remove después de 5 segundos
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Función para actualizar visual del card
+        function updateTaskCardVisual(tareaId, nuevoEstado) {
+            const taskCard = document.querySelector(`[data-task-id="${tareaId}"]`);
+            if (taskCard) {
+                // Remover clases de estado anteriores
+                taskCard.classList.remove('task-pendiente', 'task-en_proceso', 'task-en_revision', 'task-completada');
+                // Agregar nueva clase de estado
+                taskCard.classList.add(`task-${nuevoEstado}`);
+            }
+        }
+    </script>
+</body>
+</html>

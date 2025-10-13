@@ -1,0 +1,206 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registrarse - Panel ADICLA</title>
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/upload.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+
+<body>
+    <header>
+        <h1 style="text-align: center;">Registro de Nueva Cuenta - Sistema ADICLA</h1>
+    </header>
+
+    <main>
+        <section class="form-section" style="max-width: 500px; margin: 30px auto;">
+            <h2>Crear Nueva Cuenta</h2>
+            <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                Complete todos los campos para crear su cuenta en el sistema de tareas ADICLA
+            </p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" class="upload-form">
+                {% csrf_token %}
+                
+                <!-- Información de Cuenta -->
+                <h3 style="color: #333; margin: 20px 0 10px 0; border-bottom: 2px solid #007bff; padding-bottom: 5px;">
+                    📧 Información de Cuenta
+                </h3>
+                
+                <div>
+                    <label for="email">Correo Electrónico *:</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           placeholder="usuario@adicla.org.gt"
+                           required
+                           value="{{ request.POST.email }}"
+                           style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <small style="color: #666;">Debe ser un email corporativo @adicla.org.gt</small>
+                </div>
+
+                <div>
+                    <label for="password">Contraseña *:</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required
+                           placeholder="Mínimo 6 caracteres"
+                           style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <div>
+                    <label for="confirm_password">Confirmar Contraseña *:</label>
+                    <input type="password" 
+                           id="confirm_password" 
+                           name="confirm_password" 
+                           required
+                           placeholder="Repita su contraseña"
+                           style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <!-- Información Personal -->
+                <h3 style="color: #333; margin: 20px 0 10px 0; border-bottom: 2px solid #007bff; padding-bottom: 5px;">
+                    👤 Información Personal
+                </h3>
+                
+                <div>
+                    <label for="{{ form.nombres.id_for_label }}">Nombres *:</label>
+                    {{ form.nombres }}
+                </div>
+
+                <div>
+                    <label for="{{ form.apellidos.id_for_label }}">Apellidos *:</label>
+                    {{ form.apellidos }}
+                </div>
+
+                <!-- Información Laboral -->
+                <h3 style="color: #333; margin: 20px 0 10px 0; border-bottom: 2px solid #007bff; padding-bottom: 5px;">
+                    🏢 Información Laboral
+                </h3>
+
+                <div>
+                    <label for="{{ form.area_trabajo.id_for_label }}">Área de Trabajo *:</label>
+                    {{ form.area_trabajo }}
+                </div>
+
+                <div>
+                    <label for="{{ form.cargo.id_for_label }}">Cargo/Posición:</label>
+                    {{ form.cargo }}
+                </div>
+
+                <div>
+                    <label for="{{ form.telefono_extension.id_for_label }}">Teléfono/Extensión:</label>
+                    {{ form.telefono_extension }}
+                </div>
+
+                <button type="submit" 
+                        style="width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px;">
+                    ✅ Crear Cuenta
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="{% url 'tareas_login' %}" 
+                   style="color: #007bff; text-decoration: none; font-size: 14px;">
+                    ← ¿Ya tienes cuenta? Inicia sesión
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{% url 'landing' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🏠 Regresar a Inicio
+                </a>
+            </div>
+            
+            <p style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
+                Sistema de Gestión de Tareas ADICLA
+            </p>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        /* Estilos para los campos del formulario */
+        .upload-form input, .upload-form select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .upload-form label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .upload-form small {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 10px;
+        }
+
+        /* Estilos para mensajes de alerta */
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</body>
+</html>

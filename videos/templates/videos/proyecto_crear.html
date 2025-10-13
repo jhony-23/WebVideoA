@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if editando %}Editar Proyecto{% else %}Nuevo Proyecto{% endif %} - ADICLA</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                {% if editando %}✏️ Editar Proyecto{% else %}➕ Nuevo Proyecto{% endif %} - ADICLA
+            </h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'proyectos_lista' %}" class="btn-logout">📊 Proyectos</a>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header Section -->
+        <section class="page-header">
+            <div class="breadcrumb">
+                <a href="{% url 'tareas_dashboard' %}">Dashboard</a> > 
+                <a href="{% url 'proyectos_lista' %}">Proyectos</a> > 
+                {% if editando %}Editar "{{ proyecto.nombre }}"{% else %}Nuevo Proyecto{% endif %}
+            </div>
+            <h1>
+                {% if editando %}
+                    ✏️ Editar Proyecto: {{ proyecto.nombre }}
+                {% else %}
+                    ➕ Crear Nuevo Proyecto
+                {% endif %}
+            </h1>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section">
+            <div class="form-container">
+                {% if form.errors %}
+                    <div class="alert alert-error">
+                        <h4>⚠️ Hay errores en el formulario:</h4>
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <form method="post" class="project-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-grid">
+                        <!-- Información básica -->
+                        <div class="form-section-group">
+                            <h3 class="form-section-title">📋 Información Básica</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.help_text %}
+                                        <small class="help-text">{{ form.nombre.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.nombre.errors %}
+                                        <div class="field-errors">{{ form.nombre.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.codigo.id_for_label }}">{{ form.codigo.label }}</label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.help_text %}
+                                        <small class="help-text">{{ form.codigo.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.codigo.errors %}
+                                        <div class="field-errors">{{ form.codigo.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+                                {{ form.descripcion }}
+                                {% if form.descripcion.help_text %}
+                                    <small class="help-text">{{ form.descripcion.help_text }}</small>
+                                {% endif %}
+                                {% if form.descripcion.errors %}
+                                    <div class="field-errors">{{ form.descripcion.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.archivo.id_for_label }}"> {{ form.archivo.label|default:'' }}</label>
+                                {{ form.archivo }}
+                                {% if form.archivo.help_text %}
+                                    <small class="help-text">{{ form.archivo.help_text }}</small>
+                                {% endif %}
+                                {% if form.archivo.errors %}
+                                    <div class="field-errors">{{ form.archivo.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="form-section-group">
+                            <h3 class="form-section-title">📅 Fechas del Proyecto</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.fecha_inicio.id_for_label }}">{{ form.fecha_inicio.label }}</label>
+                                    {{ form.fecha_inicio }}
+                                    {% if form.fecha_inicio.help_text %}
+                                        <small class="help-text">{{ form.fecha_inicio.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.fecha_inicio.errors %}
+                                        <div class="field-errors">{{ form.fecha_inicio.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.fecha_fin_estimada.id_for_label }}">{{ form.fecha_fin_estimada.label }}</label>
+                                    {{ form.fecha_fin_estimada }}
+                                    {% if form.fecha_fin_estimada.help_text %}
+                                        <small class="help-text">{{ form.fecha_fin_estimada.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.fecha_fin_estimada.errors %}
+                                        <div class="field-errors">{{ form.fecha_fin_estimada.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuración -->
+                        <div class="form-section-group">
+                            <h3 class="form-section-title">⚙️ Configuración</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+                                    {{ form.estado }}
+                                    {% if form.estado.help_text %}
+                                        <small class="help-text">{{ form.estado.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.estado.errors %}
+                                        <div class="field-errors">{{ form.estado.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.visibilidad.id_for_label }}">{{ form.visibilidad.label }}</label>
+                                    {{ form.visibilidad }}
+                                    {% if form.visibilidad.help_text %}
+                                        <small class="help-text">{{ form.visibilidad.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.visibilidad.errors %}
+                                        <div class="field-errors">{{ form.visibilidad.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="{{ form.icono.id_for_label }}">{{ form.icono.label }}</label>
+                                    {{ form.icono }}
+                                    {% if form.icono.help_text %}
+                                        <small class="help-text">{{ form.icono.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.icono.errors %}
+                                        <div class="field-errors">{{ form.icono.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.color.id_for_label }}">{{ form.color.label }}</label>
+                                    {{ form.color }}
+                                    {% if form.color.help_text %}
+                                        <small class="help-text">{{ form.color.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.color.errors %}
+                                        <div class="field-errors">{{ form.color.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-action">
+                            {% if editando %}
+                                ✅ Actualizar Proyecto
+                            {% else %}
+                                ➕ Crear Proyecto
+                            {% endif %}
+                        </button>
+                        <a href="{% if editando %}{% url 'proyecto_detalle' proyecto.pk %}{% else %}{% url 'proyectos_lista' %}{% endif %}" class="btn-secondary">
+                            ❌ Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

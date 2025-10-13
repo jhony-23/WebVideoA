@@ -5,14 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Acceso - Panel ADICLA</title>
-    <link rel="icon" type="image/svg+xml" href="{% static 'videos/img/favicon_institucion.svg' %}?v=3">
-    <link rel="icon" type="image/x-icon" href="{% static 'videos/img/favicon.ico' %}?v=3">
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
     <link rel="stylesheet" href="{% static 'videos/css/upload.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
 </head>
 
 <body>
     <header>
-        <h1>Acceso al Sistema ADICLA</h1>
+        <h1 style="text-align: center;">Acceso al Sistema ADICLA Panel de Mercadotecnia ADICLA</h1>
     </header>
 
     <main>
@@ -53,10 +53,57 @@
                 </button>
             </form>
             
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'upload_password_reset' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🔑 ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{% url 'registrarse' %}" 
+                   style="color: #007bff; text-decoration: none; font-size: 14px; font-weight: 500;">
+                    📝 Registrarse
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{% url 'landing' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🏠 Regresar a Inicio
+                </a>
+            </div>
+            
             <p style="text-align: center; margin-top: 20px; color: #666; font-size: 14px;">
                 Panel de Mercadotecnia ADICLA
             </p>
         </section>
     </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

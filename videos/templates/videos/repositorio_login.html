@@ -1,97 +1,101 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repositorio ADICLA</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
 
-        .login-container {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            width: 340px;
-            text-align: center;
-        }
 
-        .login-container h2 {
-            margin-bottom: 20px;
-            color: #003366;
-        }
+    <title>Acceso - Repositorio ADICLA</title>
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/upload.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
 
-        .login-container input,
-        .login-container select {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            background: #0056b3; 
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .login-container button:hover {
-            background: #003d80;
-        }
-    </style>
 </head>
+
 <body>
-    <div class="login-container">
-        <h2>Repositorio ADICLA</h2>
-        <form method="POST" action="/respositorioadicla.html">
+
+    <header>
+        <h1 style="text-align: center;">Acceso al Sistema ADICLA - Repositorio</h1>
+    </header>
+
+    <main>
+        <section class="form-section" style="max-width: 400px; margin: 50px auto;">
+            <h2>Iniciar Sesión</h2>
+            
             {% if messages %}
                 {% for message in messages %}
-                    <div style="color:#d32f2f; margin-bottom:10px;">{{ message }}</div>
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
-            {% csrf_token %}
-            <input type="text" name="email" id="usuario" placeholder="Correo o Usuario" required>
-            <input type="password" name="password" id="password" placeholder="Contraseña" required>
-            <select name="puesto" id="puesto" required>
-                <option value="">Seleccione un puesto</option>
-            </select>
-            <button type="submit">Ingresar</button>
-        </form>
-    </div>
+            
+            <form method="post" class="upload-form">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="email">Correo Electrónico:</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           placeholder="usuario@adicla.org.gt"
+                           required
+                           style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
 
-    <script>
-      
-        const puestosBD = [
-            "Administrador","Gerente General","Asesor de Créditos","Supervisor de Agencias",
-            "Secretaria","Director de Unidad","Técnico","Analista","Supervisor de Ganancias",
-            "Jefe de Unidad de Riesgos","Contador","Auxiliar Contable","Coordinador de Proyectos",
-            "Recepcionista","Gestor de Crédito","Auditor Interno","Encargado de Sistemas",
-            "Encargado de Almacén","Asistente Administrativo","Practicante","Jefe de Talento Humano"
-        ];
-        const selectPuesto = document.getElementById("puesto");
-        puestosBD.forEach(puesto => {
-            const option = document.createElement("option");
-            option.value = puesto;
-            option.textContent = puesto;
-            selectPuesto.appendChild(option);
-        });
-    </script>
+                <div>
+                    <label for="password">Contraseña:</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           required
+                           style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+
+                <button type="submit" 
+                        style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+                    Ingresar
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="{% url 'repositorio_password_reset' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🔑 ¿Olvidaste tu contraseña?
+                </a>
+            </div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="{% url 'landing' %}" 
+                   style="color: #6b7280; text-decoration: none; font-size: 14px;">
+                    🏠 Regresar a Inicio
+                </a>
+            </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
 </body>
 </html>

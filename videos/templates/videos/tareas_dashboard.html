@@ -4,296 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Gestión de Tareas ADICLA</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f8f9fa;
-            color: #333;
-            min-height: 100vh;
-        }
-        
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        
-        .user-welcome {
-            font-size: 1rem;
-        }
-        
-        .btn-logout {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 8px 20px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-logout:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-        
-        /* Main Content */
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        
-        .welcome-section {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        
-        .welcome-section h1 {
-            color: #2d6a4f;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .welcome-section p {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .status-badge {
-            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
-            color: #2d6a4f;
-            padding: 10px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            display: inline-block;
-            border: 2px solid #2d6a4f;
-        }
-        
-        /* Quick Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-        
-        .stat-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            display: block;
-        }
-        
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #2d6a4f;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            color: #666;
-            font-size: 1rem;
-        }
-        
-        /* Features Section */
-        .features-section {
-            margin-bottom: 40px;
-        }
-        
-        .section-title {
-            color: #2d6a4f;
-            font-size: 2rem;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
-        
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-        
-        .feature-card h3 {
-            color: #2d6a4f;
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .feature-card p {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        
-        .btn-feature {
-            background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .btn-feature:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(45, 106, 79, 0.3);
-        }
-        
-        .btn-feature.disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-        
-        .btn-feature.disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-        
-        /* Coming Soon Section */
-        .coming-soon {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            border: 2px dashed #dee2e6;
-        }
-        
-        .coming-soon h3 {
-            color: #6c757d;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .coming-soon p {
-            color: #6c757d;
-            font-size: 1rem;
-        }
-        
-        /* Navigation Links */
-        .nav-links {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .nav-links h3 {
-            color: #2d6a4f;
-            margin-bottom: 20px;
-            font-size: 1.3rem;
-        }
-        
-        .nav-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn-nav {
-            background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-nav:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(64, 145, 108, 0.3);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .user-info {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .nav-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-    </style>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
 </head>
 <body>
     <!-- Header -->
@@ -311,89 +25,250 @@
     <main class="main-content">
         <!-- Welcome Section -->
         <section class="welcome-section">
-            <h1>🎉 ¡Bienvenido al Sistema de Gestión de Tareas!</h1>
-            <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
-            <div class="status-badge">✅ Sistema Activo</div>
+            {% if es_primer_acceso %}
+                <h1>🎉 ¡Bienvenido al Sistema de Gestión de Tareas!</h1>
+                <p>Plataforma colaborativa para la gestión eficiente de proyectos y tareas del equipo ADICLA</p>
+                <div class="status-badge">🚀 ¡Empecemos a trabajar!</div>
+                <div class="welcome-actions" style="margin-top: 20px;">
+                    <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary">+ Crear mi primer proyecto</a>
+                    <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">📚 Ver proyectos</a>
+                </div>
+            {% else %}
+                <h1>👋 ¡Hola de nuevo, {{ user.perfil.nombres|default:user.first_name|default:user.username }}!</h1>
+                <p>Aquí tienes un resumen de tu actividad en ADICLA</p>
+                <div class="status-badge">✅ Sistema Activo</div>
+            {% endif %}
         </section>
         
         <!-- Quick Stats -->
         <section class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
-                <div class="stat-number">0</div>
-                <div class="stat-label">Tareas Activas</div>
+                <div class="stat-number">{{ total_tareas }}</div>
+                <div class="stat-label">Total Tareas</div>
+                <div class="stat-detail">
+                    <small>{{ tareas_pendientes }} pendientes • {{ tareas_en_proceso }} en proceso</small>
+                </div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-icon">📊</div>
-                <div class="stat-number">0</div>
-                <div class="stat-label">Proyectos</div>
+                <div class="stat-number">{{ total_proyectos }}</div>
+                <div class="stat-label">Mis Proyectos</div>
+                <div class="stat-detail">
+                    <small>{{ proyectos_activos }} activos</small>
+                </div>
+            </div>
+            
+            <div class="stat-card {% if tareas_criticas > 0 %}stat-urgent{% endif %}">
+                <div class="stat-icon">�</div>
+                <div class="stat-number">{{ tareas_criticas }}</div>
+                <div class="stat-label">Tareas Críticas</div>
+                <div class="stat-detail">
+                    <small>{{ tareas_altas }} de alta prioridad</small>
+                </div>
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon">👥</div>
-                <div class="stat-number">1</div>
-                <div class="stat-label">Miembros del Equipo</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">⏰</div>
-                <div class="stat-number">0%</div>
-                <div class="stat-label">Progreso General</div>
+                <div class="stat-icon">✅</div>
+                <div class="stat-number">{{ tareas_completadas }}</div>
+                <div class="stat-label">Completadas</div>
+                <div class="stat-detail">
+                    <small>{% if total_tareas > 0 %}{{ tareas_completadas|floatformat:0 }}/{{ total_tareas }}{% else %}0/0{% endif %}</small>
+                </div>
             </div>
         </section>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2 class="section-title">⚡ Acciones Rápidas</h2>
+            <div class="actions-grid">
+                <a href="{% url 'proyecto_crear' %}" class="action-card">
+                    <div class="action-icon">📊</div>
+                    <h3>Crear Proyecto</h3>
+                    <p>Inicia un nuevo proyecto de trabajo</p>
+                </a>
+                <a href="{% url 'tarea_crear' %}" class="action-card">
+                    <div class="action-icon">📋</div>
+                    <h3>Nueva Tarea</h3>
+                    <p>Agrega una tarea a tus proyectos</p>
+                </a>
+                <a href="{% url 'proyectos_lista' %}" class="action-card">
+                    <div class="action-icon">📚</div>
+                    <h3>Ver Proyectos</h3>
+                    <p>Revisa todos tus proyectos</p>
+                </a>
+                <a href="{% url 'tareas_lista' %}" class="action-card">
+                    <div class="action-icon">📝</div>
+                    <h3>Ver Tareas</h3>
+                    <p>Gestiona todas tus tareas</p>
+                </a>
+            </div>
+        </section>
+
+        {% if not es_primer_acceso %}
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <div class="dashboard-left">
+                <!-- Proyectos Recientes -->
+                <section class="recent-projects">
+                    <div class="section-header">
+                        <h2 class="section-title">📊 Proyectos Recientes</h2>
+                        <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary" style="margin-left: 50px;">📚 Ver todos</a>
+                    </div>
+                    
+                    {% if proyectos_recientes %}
+                        <div class="projects-list">
+                            {% for proyecto in proyectos_recientes %}
+                            <div class="project-item">
+                                <div class="project-info">
+                                    <div class="project-icon">{{ proyecto.icono }}</div>
+                                    <div class="project-details">
+                                        <h3>{{ proyecto.nombre }}</h3>
+                                        <p>{{ proyecto.codigo }} • Creado {{ proyecto.created_at|timesince }} atrás</p>
+                                        <div class="project-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" data-progress="{{ proyecto.get_progreso }}"></div>
+                                            </div>
+                                            <span class="progress-text">{{ proyecto.get_progreso }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="project-status">
+                                    <span class="status-badge status-{{ proyecto.estado }}">{{ proyecto.get_estado_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>🎯 ¡Aún no tienes proyectos! Crea tu primer proyecto para empezar.</p>
+                            <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary">+ Crear Proyecto</a>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+            
+            <div class="dashboard-right">
+                <!-- Tareas Próximas a Vencer -->
+                <section class="upcoming-tasks">
+                    <div class="section-header" style="flex-direction: column; align-items: center;">
+                        <h2 class="section-title">⏰ Próximas a Vencer</h2>
+                        <a href="{% url 'tareas_lista' %}" class="btn-action-secondary" style="margin-top: 10px;">📝 Ver todas</a>
+                    </div>
+                    
+                    {% if tareas_proximas %}
+                        <div class="tasks-list">
+                            {% for tarea in tareas_proximas %}
+                            <div class="task-item">
+                                <div class="task-priority priority-{{ tarea.prioridad }}"></div>
+                                <div class="task-info">
+                                    <h4>{{ tarea.titulo }}</h4>
+                                    <p>{{ tarea.proyecto.nombre }}</p>
+                                    <div class="task-meta">
+                                        {% if tarea.fecha_vencimiento %}
+                                            <span class="task-date">
+                                                {% if tarea.esta_vencida %}
+                                                    🚨 Vencida hace {{ tarea.fecha_vencimiento|timesince }}
+                                                {% else %}
+                                                    📅 Vence {{ tarea.fecha_vencimiento|timeuntil }}
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="task-status">
+                                    <span class="status-badge status-{{ tarea.estado }}">{{ tarea.get_estado_display }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>🎉 ¡No tienes tareas próximas a vencer!</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+        </div>
+        {% endif %}
         
-        <!-- Features Section -->
-        <section class="features-section">
-            <h2 class="section-title">🛠️ Funcionalidades Disponibles</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3>📝 Gestión de Tareas</h3>
-                    <p>Crea, asigna y da seguimiento a tareas individuales y de equipo con fechas límite y prioridades.</p>
-                    <button class="btn-feature disabled">🚧 Próximamente</button>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>📊 Dashboard de Proyectos</h3>
-                    <p>Visualiza el progreso de todos los proyectos en tiempo real con gráficos y métricas detalladas.</p>
-                    <button class="btn-feature disabled">🚧 En Desarrollo</button>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>👥 Colaboración en Equipo</h3>
-                    <p>Trabaja de manera colaborativa con comentarios, archivos adjuntos y notificaciones en tiempo real.</p>
-                    <button class="btn-feature disabled">🚧 Próximamente</button>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>📅 Calendario de Actividades</h3>
-                    <p>Planifica y visualiza todas las actividades y fechas importantes en un calendario integrado.</p>
-                    <button class="btn-feature disabled">🚧 En Desarrollo</button>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>📈 Reportes y Análisis</h3>
-                    <p>Genera reportes detallados sobre productividad, tiempo invertido y rendimiento del equipo.</p>
-                    <button class="btn-feature disabled">🚧 Próximamente</button>
-                </div>
-                
-                <div class="coming-soon">
-                    <h3>🔮 Más Funciones Próximamente</h3>
-                    <p>Estamos trabajando en más herramientas para mejorar tu productividad y la del equipo.</p>
-                </div>
-            </div>
-        </section>
+
         
         <!-- Navigation Links -->
         <section class="nav-links">
             <h3>🔗 Enlaces Rápidos</h3>
             <div class="nav-buttons">
-                <a href="/inicio/" class="btn-nav">🏠 Página Principal</a>
-                <a href="/" class="btn-nav">📺 Sistema de Videos</a>
+                <a href="/" class="btn-nav">🏠 Página Principal</a>
+                <a href="/videos/" class="btn-nav">📺 Sistema de Videos</a>
                 <a href="/upload/" class="btn-nav">⬆️ Panel Upload</a>
                 <a href="/repositorio/" class="btn-nav">📂 Repositorio</a>
             </div>
         </section>
     </main>
+
+    <script>
+        // Script para manejar las barras de progreso
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill[data-progress]');
+            
+            progressBars.forEach(function(bar) {
+                const progress = bar.getAttribute('data-progress');
+                bar.style.width = progress + '%';
+            });
+        });
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling para navegación
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
 </body>
 </html>

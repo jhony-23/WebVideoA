@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Proyectos - ADICLA</title>
+    {% load static %}
+    {% load proyecto_tags %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+        <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">📊 Mis Proyectos - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+                <a href="{% url 'tareas_logout' %}" class="btn-logout">🚪 Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Title -->
+        <h1 class="page-title" style="margin-top: 100px;">📊 Gestión de Proyectos</h1>
+        
+        <!-- Search Container -->
+        <div class="search-container" style="margin-bottom: 20px;">
+            <form method="get" class="inline-form">
+                <input type="text" name="q" value="{{ busqueda }}" placeholder="🔍 Buscar proyectos..." class="search-input">
+                <input type="hidden" name="estado" value="{{ estado_filtro }}">
+            </form>
+        </div>
+
+        <!-- New Project Button -->
+        <div style="text-align: center; margin: 25px 0;">
+            <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary" style="padding: 12px 24px; font-size: 16px;">+ Nuevo Proyecto</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+            <form method="get" class="filters-form" style="display: flex; gap: 1rem; align-items: end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                    <label class="form-label">Estado del Proyecto</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos los estados</option>
+                        {% for codigo, nombre in estados_disponibles %}
+                            <option value="{{ codigo }}" {% if estado_filtro == codigo %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <button type="submit" class="btn-action-secondary">Filtrar</button>
+                    {% if busqueda or estado_filtro %}
+                        <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">Limpiar</a>
+                    {% endif %}
+                </div>
+                <input type="hidden" name="q" value="{{ busqueda }}">
+            </form>
+        </div>
+
+        <!-- Projects List -->
+        <section class="projects-section">
+            {% if proyectos %}
+                <div class="proyectos-grid" style="gap: 30px;">
+                    {% for proyecto in proyectos %}
+                    <div class="proyecto-card" style="margin-bottom: 25px; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                        <h3 class="proyecto-titulo">
+                            {{ proyecto.icono }} 
+                            {% if proyecto.pk %}
+                                <a href="{% url 'proyecto_detalle' proyecto.pk %}" style="color: inherit; text-decoration: none;">{{ proyecto.nombre }}</a>
+                            {% else %}
+                                {{ proyecto.nombre }}
+                            {% endif %}
+                        </h3>
+                        
+                        <p class="proyecto-descripcion">{{ proyecto.descripcion|truncatewords:25 }}</p>
+                        
+                        <div class="proyecto-meta">
+                            <span>📅 {{ proyecto.fecha_inicio }}</span>
+                            <span class="proyecto-estado estado-{{ proyecto.estado }}">{{ proyecto.get_estado_display }}</span>
+                        </div>
+                        
+                        <div class="proyecto-progreso">
+                            <div class="progreso-label">
+                                <span>Progreso del Proyecto</span>
+                                <strong>{{ proyecto.get_progreso }}%</strong>
+                            </div>
+                            <div class="progreso-barra">
+                                <div class="progreso-fill" data-progress="{{ proyecto.get_progreso }}"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0;">
+                            <div class="stat-card" style="padding: 1rem;">
+                                <div class="stat-number" style="font-size: 1.8rem;">{{ proyecto.get_total_tareas }}</div>
+                                <div class="stat-label" style="font-size: 0.8rem;">Tareas</div>
+                            </div>
+                            <div class="stat-card" style="padding: 1rem;">
+                                <div class="stat-number" style="font-size: 1.8rem;">{{ proyecto.get_tareas_completadas }}</div>
+                                <div class="stat-label" style="font-size: 0.8rem;">Completadas</div>
+                            </div>
+                            <div class="stat-card" style="padding: 1rem;">
+                                <div class="stat-number" style="font-size: 1.8rem;">{{ proyecto.get_miembros.count }}</div>
+                                <div class="stat-label" style="font-size: 0.8rem;">Miembros</div>
+                            </div>
+                        </div>
+                        
+                        <div class="proyecto-acciones">
+                            {% if proyecto.pk %}
+                                <a href="{% url 'proyecto_detalle' proyecto.pk %}" class="btn-action-secondary">Ver Detalle</a>
+                            {% endif %}
+                            {% if proyecto|puede_gestionar:user and proyecto.pk %}
+                                <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action-secondary">Editar</a>
+                            {% endif %}
+                            {% if proyecto.pk %}
+                                <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action-secondary">+ Nueva Tarea</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="card" style="text-align: center; padding: 4rem 2rem;">
+                    <div style="font-size: 4rem; margin-bottom: 2rem;">📋</div>
+                    <h3 style="color: #1e3c72; font-size: 1.8rem; margin-bottom: 1rem;">No hay proyectos</h3>
+                    {% if busqueda or estado_filtro %}
+                        <p style="color: #5a6c7d; margin-bottom: 2rem; font-size: 1.1rem;">No se encontraron proyectos con los filtros aplicados.</p>
+                        <a href="{% url 'proyectos_lista' %}" class="btn-action-secondary">Ver todos los proyectos</a>
+                    {% else %}
+                        <p style="color: #5a6c7d; margin-bottom: 2rem; font-size: 1.1rem;">¡Aún no tienes proyectos! Crea tu primer proyecto para empezar.</p>
+                        <a href="{% url 'proyecto_crear' %}" class="btn-action-secondary">+ Crear mi primer proyecto</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        // Script para manejar las barras de progreso
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill[data-progress]');
+            
+            progressBars.forEach(function(bar) {
+                const progress = bar.getAttribute('data-progress');
+                bar.style.width = progress + '%';
+            });
+        });
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

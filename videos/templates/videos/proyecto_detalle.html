@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ proyecto.nombre }} - ADICLA</title>
+    {% load static %}
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/tareas_dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">{{ proyecto.icono }} {{ proyecto.nombre }} - ADICLA</h1>
+            <div class="user-info">
+                <span class="user-welcome">👋 {{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'proyectos_lista' %}" class="btn-logout">📊 Proyectos</a>
+                <a href="{% url 'tareas_dashboard' %}" class="btn-logout">🏠 Dashboard</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header Section -->
+        <section class="page-header">
+            <div class="breadcrumb">
+                <a href="{% url 'tareas_dashboard' %}">Dashboard</a> > 
+                <a href="{% url 'proyectos_lista' %}">Proyectos</a> > 
+                {{ proyecto.nombre }}
+            </div>
+            <div class="project-header-detail">
+                <div class="project-info-main">
+                    <div class="project-icon-large">{{ proyecto.icono }}</div>
+                    <div class="project-details-main">
+                        <h1>{{ proyecto.nombre }}</h1>
+                        <p class="project-code-large">{{ proyecto.codigo }}</p>
+                        <div class="project-status-main">
+                            <span class="status-badge status-{{ proyecto.estado }}">{{ proyecto.get_estado_display }}</span>
+                            <span class="visibility-badge visibility-{{ proyecto.visibilidad }}">
+                                {% if proyecto.visibilidad == 'publico' %}🌐 Público{% else %}🔒 Privado{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-actions-main" style="margin-top: 25px; gap: 15px; display: flex; flex-wrap: wrap;">
+                    {% if puede_gestionar %}
+                        <a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn-action-secondary" style="margin-right: 15px;">✏️ Editar</a>
+                        {% if proyecto.creador == user %}
+                            <a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn-action-secondary" style="margin-right: 15px;">🗑️ Eliminar</a>
+                        {% endif %}
+                    {% endif %}
+                    <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action-secondary">➕ Nueva Tarea</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Info Grid -->
+        <div class="detail-grid" style="margin-top: -125px;">
+            <div class="detail-left">
+                <!-- Project Description -->
+                <section class="detail-section">
+                    <h2 class="section-title">📋 Descripción del Proyecto</h2>
+                    <div class="description-content" style="text-align: center;">
+                        {% if proyecto.descripcion %}
+                            <p>{{ proyecto.descripcion|linebreaks }}</p>
+                        {% else %}
+                            <p class="no-content">No hay descripción disponible.</p>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <!-- Project Statistics -->
+                <section class="detail-section" style="margin-top: -100px;">
+                    <h2 class="section-title">📊 Estadísticas del Proyecto</h2>
+                    <div class="stats-grid-detail" style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ estadisticas.total_tareas }}</div>
+                                <div class="stat-label">Total Tareas</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ estadisticas.tareas_pendientes }}</div>
+                                <div class="stat-label">Pendientes</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
+                            <div class="stat-icon">🔄</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ estadisticas.tareas_en_proceso }}</div>
+                                <div class="stat-label">En Proceso</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-detail" style="flex: 1; min-width: 120px;">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ estadisticas.tareas_completadas }}</div>
+                                <div class="stat-label">Completadas</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress-section" style="margin-top: 50px;">
+                        <div class="progress-info">
+                            <span class="progress-label">Progreso General</span>
+                            <span class="progress-text">{{ estadisticas.progreso }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="{{ estadisticas.progreso }}"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Project Details -->
+                <section class="detail-section" style="margin-top: -100px;">
+                    <h2 class="section-title">📅 Información del Proyecto</h2>
+                    <div class="info-grid" style="text-align: center;">
+                        <div class="info-item">
+                            <span class="info-label">Fecha de Inicio:</span>
+                            <span class="info-value">{{ proyecto.fecha_inicio|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Fecha Fin Estimada:</span>
+                            <span class="info-value">
+                                {% if proyecto.fecha_fin_estimada %}
+                                    {{ proyecto.fecha_fin_estimada|date:"d/m/Y" }}
+                                {% else %}
+                                    <em>No definida</em>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Creado por:</span>
+                            <span class="info-value">{{ proyecto.creador.first_name|default:proyecto.creador.username }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Creado el:</span>
+                            <span class="info-value">{{ proyecto.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="detail-right">
+                <!-- Team Members -->
+                <section class="detail-section" style="margin-top: -100px;">
+                    <h2 class="section-title">👥 Miembros del Equipo</h2>
+                    <div class="members-list" style="text-align: center;">
+                        <!-- Creador -->
+                        <div class="member-item member-creator">
+                            <div class="member-avatar">{{ proyecto.creador.first_name.0|default:proyecto.creador.username.0|upper }}</div>
+                            <div class="member-info">
+                                <div class="member-name">{{ proyecto.creador.first_name|default:proyecto.creador.username }}</div>
+                                <div class="member-role">👑 Creador</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Otros miembros -->
+                        {% for miembro in proyecto.miembros.all %}
+                        <div class="member-item">
+                            <div class="member-avatar">{{ miembro.usuario.first_name.0|default:miembro.usuario.username.0|upper }}</div>
+                            <div class="member-info">
+                                <div class="member-name">{{ miembro.usuario.first_name|default:miembro.usuario.username }}</div>
+                                <div class="member-role">
+                                    {% if miembro.rol == 'admin' %}🔧 Administrador{% elif miembro.rol == 'jefe' %}📋 Jefe de Proyecto{% else %}👤 Usuario{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- Botón para agregar miembros (siempre visible para el creador) -->
+                        {% if proyecto.creador == user %}
+                        <div class="add-members-section" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px dashed #dee2e6;">
+                            <h4 style="margin-bottom: 15px; color: #495057;">➕ Agregar Nuevo Miembro</h4>
+                            <form method="post" action="{% url 'proyecto_agregar_miembro' proyecto.id %}" style="display: flex; flex-direction: column; gap: 10px;">
+                                {% csrf_token %}
+                                <select name="usuario" class="form-control" required style="padding: 8px; border-radius: 4px; border: 1px solid #ced4da;">
+                                    <option value="">Selecciona un usuario...</option>
+                                    {% for usuario in usuarios_disponibles %}
+                                        <option value="{{ usuario.id }}">
+                                            {{ usuario.get_full_name|default:usuario.username }} ({{ usuario.email }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small style="color: #6c757d; font-size: 0.875em;">
+                                    💡 El usuario agregado tendrá permisos completos de administrador
+                                </small>
+                                <button type="submit" class="btn-action-secondary" style="align-self: flex-start; padding: 8px 16px;">
+                                    ✅ Agregar Miembro
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                        
+                        {% if proyecto.miembros.count == 0 %}
+                        <div class="no-members" style="margin-top: 15px;">
+                            <p style="color: #6c757d; font-style: italic;">
+                                {% if proyecto.creador == user %}
+                                    Puedes agregar miembros usando el formulario de arriba.
+                                {% else %}
+                                    Solo el creador pertenece a este proyecto.
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <section class="tasks-section" style="margin-top: 30px;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 class="section-title" style="margin: 0;">📋 Tareas del Proyecto</h2>
+                <div class="section-actions" style="gap: 10px; display: flex;">
+                    <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action">➕ Nueva Tarea</a>
+                    <a href="{% url 'tareas_lista' %}?proyecto={{ proyecto.pk }}" class="btn-secondary">Ver Todas</a>
+                </div>
+            </div>
+
+            {% if tareas %}
+                <div class="tasks-table" style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    
+                    {% for tarea in tareas %}
+                    <div class="table-row" style="display: flex; padding: 15px; border-bottom: 1px solid #f1f3f4; align-items: center; transition: background-color 0.2s;">
+                        <div class="col-title" style="flex: 2; padding-right: 15px;">
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" style="color: #1e40af; font-weight: 500; text-decoration: none;">
+                                {{ tarea.titulo|default:"Sin título" }}
+                            </a>
+                            {% if tarea.descripcion %}
+                                <div style="font-size: 0.85em; color: #6b7280; margin-top: 4px;">
+                                    {{ tarea.descripcion|truncatewords:8 }}
+                                </div>
+                            {% endif %}
+                            <div style="font-size: 0.75em; color: #9ca3af; margin-top: 2px;">
+                                Creada {{ tarea.created_at|timesince }} atrás por {{ tarea.creador.first_name|default:tarea.creador.username }}
+                            </div>
+                        </div>
+                        <div class="col-assigned" style="flex: 1; padding-right: 10px;">
+                            {% for asignado in tarea.asignados.all %}
+                                <div class="assigned-user" style="display: inline-block; background: #e0f2fe; color: #0277bd; padding: 4px 8px; border-radius: 12px; font-size: 0.85em; margin-right: 4px;">
+                                    {{ asignado.first_name|default:asignado.username }}
+                                </div>
+                            {% empty %}
+                                <span class="no-assigned" style="color: #9ca3af; font-style: italic;">Sin asignar</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-priority" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.prioridad == 'critica' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fecaca; color: #dc2626; display: inline-block;">🚨 {{ tarea.get_prioridad_display }}</span>
+                            {% elif tarea.prioridad == 'alta' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fed7aa; color: #ea580c; display: inline-block;">⚠️ {{ tarea.get_prioridad_display }}</span>
+                            {% elif tarea.prioridad == 'media' %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #fef3c7; color: #d97706; display: inline-block;">📋 {{ tarea.get_prioridad_display }}</span>
+                            {% else %}
+                                <span class="priority-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #e0f2fe; color: #0277bd; display: inline-block;">📝 {{ tarea.get_prioridad_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-status" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.estado == 'pendiente' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #f3f4f6; color: #6b7280; display: inline-block;">⏳ {{ tarea.get_estado_display }}</span>
+                            {% elif tarea.estado == 'en_proceso' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #dbeafe; color: #1d4ed8; display: inline-block;">🔄 {{ tarea.get_estado_display }}</span>
+                            {% elif tarea.estado == 'completada' %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #dcfce7; color: #16a34a; display: inline-block;">✅ {{ tarea.get_estado_display }}</span>
+                            {% else %}
+                                <span class="status-badge" style="padding: 6px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500; background: #f3f4f6; color: #6b7280; display: inline-block;">📝 {{ tarea.get_estado_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-due" style="flex: 1; padding-right: 10px;">
+                            {% if tarea.fecha_vencimiento %}
+                                {% if tarea.esta_vencida %}
+                                    <span class="due-overdue" style="color: #dc2626; font-weight: 600;">🚨 Vencida</span>
+                                    <div style="font-size: 0.8em; color: #ef4444;">{{ tarea.fecha_vencimiento|date:"d/m/Y H:i" }}</div>
+                                    <div style="font-size: 0.75em; color: #dc2626;">Hace {{ tarea.fecha_vencimiento|timesince }}</div>
+                                {% else %}
+                                    <span class="due-normal" style="color: #374151; font-weight: 500;">📅 {{ tarea.fecha_vencimiento|date:"d/m/Y" }}</span>
+                                    <div style="font-size: 0.75em; color: #059669;">Faltan {{ tarea.fecha_vencimiento|timeuntil }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="due-none" style="color: #9ca3af; font-style: italic;">Sin fecha límite</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-actions" style="flex: 0.8; display: flex; gap: 8px;">
+                            <a href="{% url 'tarea_detalle' tarea_id=tarea.id %}" class="btn-mini" style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-decoration: none; transition: background 0.2s;" title="Ver detalle">👁️</a>
+                            {% if tarea.creador == user or puede_gestionar %}
+                                <a href="{% url 'tarea_editar' tarea.id %}" class="btn-mini" style="padding: 8px; background: #f3f4f6; border-radius: 6px; text-decoration: none; transition: background 0.2s;" title="Editar">✏️</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📝</div>
+                    <h3>No hay tareas en este proyecto</h3>
+                    <p>¡Crea la primera tarea para empezar a trabajar!</p>
+                    <a href="{% url 'tarea_crear_proyecto' proyecto.pk %}" class="btn-action">➕ Crear primera tarea</a>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Files Section -->
+        <section class="files-section">
+            <h2>📎 Archivos del Proyecto</h2>
+            
+            <!-- File Upload Form -->
+            {% if puede_gestionar %}
+            <div class="comment-form-container">
+                <h3>📤 Subir Archivo</h3>
+                <form method="post" enctype="multipart/form-data" action="{% url 'proyecto_archivo_crear' proyecto.id %}" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_archivo">📎 Seleccionar archivo</label>
+                        <input type="file" id="id_archivo" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_descripcion">Descripción</label>
+                        <input type="text" id="id_descripcion" name="descripcion" class="form-control" placeholder="Descripción opcional del archivo...">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">📎 Subir Archivo</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Files Grid -->
+            {% if archivos %}
+                <div class="files-grid">
+                    {% for archivo in archivos %}
+                        <div class="file-card">
+                            <div class="file-icon">{{ archivo.get_icono }}</div>
+                            <div class="file-info">
+                                <h4 class="file-name">{{ archivo.nombre_original }}</h4>
+                                <p class="file-details">{{ archivo.get_tamaño_legible }} • {{ archivo.created_at|date:"d/m/Y H:i" }}</p>
+                                <p class="file-uploader">Subido por {{ archivo.subido_por.get_full_name|default:archivo.subido_por.username }}</p>
+                                {% if archivo.descripcion %}
+                                    <p class="file-description">"{{ archivo.descripcion }}"</p>
+                                {% endif %}
+                            </div>
+                            <div class="file-actions">
+                                <a href="{% url 'archivo_descargar' tipo='proyecto' archivo_id=archivo.id %}" class="btn-file-action">⬇️ Descargar</a>
+                                {% if archivo.puede_previsualizar %}
+                                    <a href="{% url 'archivo_previsualizar' tipo='proyecto' archivo_id=archivo.id %}" target="_blank" class="btn-file-action">👁️ Ver</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-comments">
+                    <div class="empty-icon">📎</div>
+                    <h3>No hay archivos</h3>
+                    <p>{% if puede_gestionar %}Sube el primer archivo para este proyecto.{% else %}Este proyecto no tiene archivos aún.{% endif %}</p>
+                </div>
+            {% endif %}
+        </section>
+
+
+
+        <!-- Comentarios del Proyecto -->
+        <section class="comments-section">
+            <div class="section-header">
+                <h2 class="section-title">💬 Comentarios del Proyecto</h2>
+            </div>
+            
+            <!-- Formulario para nuevo comentario -->
+            <div class="comment-form-container">
+                <form method="post" action="{% url 'comentario_proyecto_crear' proyecto.id %}" enctype="multipart/form-data" class="comment-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form_comentario.contenido }}
+                    </div>
+                    <div class="form-group file-group">
+                        {{ form_comentario.archivo }}
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-comment">💬 Comentar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de comentarios -->
+            <div class="comments-list">
+                {% for comentario in comentarios %}
+                <div class="comment-thread">
+                    <div class="comment-main">
+                        <div class="comment-avatar">
+                            {{ comentario.autor.first_name.0|default:comentario.autor.username.0|upper }}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ comentario.autor.first_name|default:comentario.autor.username }}</span>
+                                <span class="comment-date">{{ comentario.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="comment-text">
+                                {{ comentario.contenido|linebreaks }}
+                            </div>
+                            
+                            <!-- Archivos adjuntos en comentario -->
+                            {% if comentario.archivos.all %}
+                            <div class="comment-files">
+                                {% for archivo in comentario.archivos.all %}
+                                <div class="comment-file">
+                                    <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">
+                                        {{ archivo.nombre_original }}
+                                    </a>
+                                    <span class="file-size">({{ archivo.get_tamaño_legible }})</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="comment-actions">
+                                <button class="btn-reply" onclick="toggleReplyForm('{{ comentario.id }}')">↩️ Responder</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de respuesta (oculto por defecto) -->
+                    <div class="reply-form-container" id="reply-form-{{ comentario.id }}" style="display: none;">
+                        <form method="post" action="{% url 'comentario_proyecto_crear' proyecto.id %}" enctype="multipart/form-data" class="reply-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="comentario_padre" value="{{ comentario.id }}">
+                            <div class="form-group">
+                                <textarea name="contenido" class="form-control" rows="2" placeholder="Escribe tu respuesta..."></textarea>
+                            </div>
+                            <div class="form-group file-group">
+                                <input type="file" name="archivo" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-comment-small">💬 Responder</button>
+                                <button type="button" class="btn-cancel-small" onclick="toggleReplyForm('{{ comentario.id }}')">❌ Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Respuestas -->
+                    {% for respuesta in comentario.get_respuestas %}
+                    <div class="comment-reply">
+                        <div class="comment-avatar">
+                            {{ respuesta.autor.first_name.0|default:respuesta.autor.username.0|upper }}
+                        </div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-author">{{ respuesta.autor.first_name|default:respuesta.autor.username }}</span>
+                                <span class="comment-date">{{ respuesta.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="comment-text">
+                                {{ respuesta.contenido|linebreaks }}
+                            </div>
+                            
+                            <!-- Archivos adjuntos en respuesta -->
+                            {% if respuesta.archivos.all %}
+                            <div class="comment-files">
+                                {% for archivo in respuesta.archivos.all %}
+                                <div class="comment-file">
+                                    <span class="file-icon-small">{{ archivo.get_icono }}</span>
+                                    <a href="{% url 'archivo_descargar' tipo='comentario' archivo_id=archivo.id %}" class="file-link">
+                                        {{ archivo.nombre_original }}
+                                    </a>
+                                    <span class="file-size">({{ archivo.get_tamaño_legible }})</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% empty %}
+                <div class="empty-comments">
+                    <div class="empty-icon">💬</div>
+                    <h3>No hay comentarios aún</h3>
+                    <p>¡Sé el primero en comentar sobre este proyecto!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Script para manejar las barras de progreso
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-fill[data-progress]');
+            
+            progressBars.forEach(function(bar) {
+                const progress = bar.getAttribute('data-progress');
+                bar.style.width = progress + '%';
+            });
+        });
+
+        // Script para manejar formularios de respuesta
+        function toggleReplyForm(comentarioId) {
+            const replyForm = document.getElementById('reply-form-' + comentarioId);
+            if (replyForm.style.display === 'none') {
+                replyForm.style.display = 'block';
+                replyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                replyForm.style.display = 'none';
+            }
+        }
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    {% load static %}
+                    <img src="{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="footer-logo">
+                    <h3>ADICLA</h3>
+                    <p>Tu institución financiera de confianza</p>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contacto</h4>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

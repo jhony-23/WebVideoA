@@ -1,10 +1,12 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADICLA - Asociación de Desarrollo Integral de Cantel</title>
-    <link rel="stylesheet" href="{% load static %}{% static 'videos/css/landing.css' %}">
+    <title>ADICLA</title>
+    <link rel="icon" type="image/png" href="{% static 'videos/img/favicon_institucion.png' %}?v=5">
+    <link rel="stylesheet" href="{% static 'videos/css/landing.css' %}?v=10">
 </head>
 <body>
     <!-- Header -->
@@ -12,7 +14,6 @@
         <nav class="navbar">
             <div class="nav-brand">
                 <img src="{% load static %}{% static 'videos/img/logo-adicla.png' %}" alt="ADICLA Logo" class="logo">
-                <h1>ADICLA</h1>
             </div>
             <ul class="nav-links">
                 <li><a href="#inicio">Inicio</a></li>
@@ -29,7 +30,7 @@
     <section id="inicio" class="hero">
         <div class="hero-content">
             <h1>Bienvenido a ADICLA</h1>
-            <h2>Asociación de Desarrollo Integral de Cantel</h2>
+            <h2>Asociación de Desarrollo Integral Cuenca del Lago de Atitlán</h2>
             <p>Tu institución financiera de confianza, comprometida con el desarrollo económico y social de nuestra comunidad.</p>
             <div class="hero-buttons">
                 <a href="#nosotros" class="btn-primary">Conoce Más</a>
@@ -52,22 +53,22 @@
             <div class="about-grid">
                 <div class="about-card">
                     <h3>🎯 Misión</h3>
-                    <p>Promover el desarrollo económico y social de Cantel y sus alrededores, ofreciendo servicios financieros accesibles y de calidad que contribuyan al bienestar de nuestros asociados.</p>
+                    <p>Somos la Asociación de desarrollo que trabaja para que nuestros socios tengan mejores condiciones de vida por medio de servicios financieros accesibles, otorgados con criterios de impacto social y ambiental.</p>
                 </div>
                 
                 <div class="about-card">
                     <h3>👁️ Visión</h3>
-                    <p>Ser la institución financiera líder en la región, reconocida por nuestra solidez, innovación y compromiso con el desarrollo sostenible de nuestras comunidades.</p>
+                    <p>Ser referentes en las microfinanzas, por medio de la inclusión financiera, basados en la solidez, confiabilidad y compromiso.</p>
                 </div>
                 
                 <div class="about-card">
                     <h3>⭐ Valores</h3>
                     <ul>
-                        <li>🤝 <strong>Confianza:</strong> Base de todas nuestras relaciones</li>
-                        <li>🎯 <strong>Transparencia:</strong> En cada proceso y decisión</li>
-                        <li>💪 <strong>Solidez:</strong> Respaldo financiero sólido</li>
-                        <li>🌱 <strong>Desarrollo:</strong> Compromiso con el crecimiento comunal</li>
-                        <li>👨‍👩‍👧‍👦 <strong>Integridad:</strong> Actuamos con honestidad y ética</li>
+                        <li>🤝 <strong>TRANSPARENCIA</strong></li>
+                        <li>🎯 <strong>RESPONSABILIDAD</strong></li>
+                        <li>💪 <strong>COMPROMISO SOCIAL</strong></li>
+                        <li>🌱 <strong>SOLIDEZ</strong></li>
+                        <li>👨‍👩‍👧‍👦 <strong>EQUIDAD</strong></li>
                     </ul>
                 </div>
             </div>
@@ -84,39 +85,27 @@
             
             <div class="services-grid">
                 <div class="service-card">
-                    <div class="service-icon">💰</div>
-                    <h3>Ahorros</h3>
-                    <p>Cuentas de ahorro con tasas competitivas y acceso fácil a tus fondos.</p>
+                    <img src="{% load static %}{% static 'videos/img/adiempresa-logo.png' %}" alt="AdiEmpresa" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;">
+                    <h3>AdiEmpresa</h3>
+                    <p>Financiamiento empresarial y créditos comerciales para impulsar el crecimiento de tu negocio y emprendimiento.</p>
                 </div>
                 
                 <div class="service-card">
-                    <div class="service-icon">🏠</div>
-                    <h3>Créditos</h3>
-                    <p>Préstamos personales, hipotecarios y empresariales con las mejores condiciones.</p>
+                    <img src="{% load static %}{% static 'videos/img/adiagro-logo.png' %}" alt="AdiAgro" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;">
+                    <h3>AdiAgro</h3>
+                    <p>Financiamiento especializado para el sector agrícola y ganadero, impulsando el desarrollo rural.</p>
                 </div>
                 
                 <div class="service-card">
-                    <div class="service-icon">💳</div>
-                    <h3>Tarjetas</h3>
-                    <p>Tarjetas de débito y crédito para facilitar tus transacciones diarias.</p>
+                    <img src="{% load static %}{% static 'videos/img/adicasa-logo.png' %}" alt="AdiCasa" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;">
+                    <h3>AdiCasa</h3>
+                    <p>Soluciones de vivienda y créditos hipotecarios para hacer realidad el sueño de tu hogar propio.</p>
                 </div>
-                
+
                 <div class="service-card">
-                    <div class="service-icon">📱</div>
-                    <h3>Banca Digital</h3>
-                    <p>Gestiona tus finanzas desde cualquier lugar con nuestra plataforma digital.</p>
-                </div>
-                
-                <div class="service-card">
-                    <div class="service-icon">🏢</div>
-                    <h3>Empresarial</h3>
-                    <p>Soluciones especializadas para empresas y emprendedores.</p>
-                </div>
-                
-                <div class="service-card">
-                    <div class="service-icon">📊</div>
-                    <h3>Inversiones</h3>
-                    <p>Opciones de inversión seguras para hacer crecer tu patrimonio.</p>
+                    <img src="{% load static %}{% static 'videos/img/adiconsumo-logo.png' %}" alt="AdiConsumo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 1rem;">
+                    <h3>AdiConsumo</h3>
+                    <p>Créditos de consumo y financiamiento personal para cubrir tus necesidades y proyectos familiares.</p>
                 </div>
             </div>
         </div>
@@ -132,67 +121,73 @@
             
             <div class="branches-grid">
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-central.jpg' %}" alt="Agencia Central">
-                    <h3>Agencia Central</h3>
-                    <p>📍 Cantel Centro, 4ta Calle 3-45 Zona 1</p>
-                    <p>📞 (502) 7761-2345</p>
-                    <p>⏰ Lunes a Viernes: 8:00 AM - 5:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-solola.jpg' %}" alt="Agencia Sololá">
+                    <h3>Sololá</h3>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-norte.jpg' %}" alt="Agencia Norte">
-                    <h3>Agencia Norte</h3>
-                    <p>📍 Zona Norte, Av. Principal 12-34</p>
-                    <p>📞 (502) 7761-2346</p>
-                    <p>⏰ Lunes a Viernes: 8:00 AM - 5:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-semetabaj.jpg' %}" alt="San Andrés Semetabaj">
+                    <h3>San Andrés Semetabaj</h3>
+                    <p>📍 Centro Comercial "Los Coroxones" San Andrés Semetabaj, Sololá</p>
+                    <p>📞 PBX (502) 7955-2475</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-sur.jpg' %}" alt="Agencia Sur">
-                    <h3>Agencia Sur</h3>
-                    <p>📍 Zona Sur, Boulevard San Juan 8-90</p>
-                    <p>📞 (502) 7761-2347</p>
-                    <p>⏰ Lunes a Viernes: 8:00 AM - 5:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-patzicia.jpg' %}" alt="Patzicía">
+                    <h3>Patzicía</h3>
+                    <p>📍 2da. Calle 3-59 Zona 2 Patzicía, Chimaltenango</p>
+                    <p>📞 PBX (502) 7955-2425</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-este.jpg' %}" alt="Agencia Este">
-                    <h3>Agencia Este</h3>
-                    <p>📍 Zona Este, Calle del Comercio 15-67</p>
-                    <p>📞 (502) 7761-2348</p>
-                    <p>⏰ Lunes a Viernes: 8:00 AM - 5:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-santo-tomas.jpg' %}" alt="Santo Tomás La Unión">
+                    <h3>Santo Tomás La Unión</h3>
+                    <p>📍 4a. Avenida 2-28 Zona 1, Santo Tomás La Unión Suchitepéquez</p>
+                    <p>📞 PBX: (502) 7955-2400</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-oeste.jpg' %}" alt="Agencia Oeste">
-                    <h3>Agencia Oeste</h3>
-                    <p>📍 Zona Oeste, Av. Libertad 6-23</p>
-                    <p>📞 (502) 7761-2349</p>
-                    <p>⏰ Lunes a Viernes: 8:00 AM - 5:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-jilotepeque.jpg' %}" alt="San Martín Jilotepeque">
+                    <h3>San Martín Jilotepeque</h3>
+                    <p>📍 Plaza Jerusalén 7a. Calle 4-9 Zona 3 Barrio la Joya, San Martin Jilotepeque</p>
+                    <p>📞 PBX: (502) 7955-2550</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-mercado.jpg' %}" alt="Agencia Mercado">
-                    <h3>Agencia Mercado</h3>
-                    <p>📍 Mercado Central, Local 45-A</p>
-                    <p>📞 (502) 7761-2350</p>
-                    <p>⏰ Lunes a Sábado: 7:00 AM - 6:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-tecpan.jpg' %}" alt="Tecpán">
+                    <h3>Tecpán</h3>
+                    <p>📍 3a. Calle 2-12 Zona 2, Barrio Poroma Tecpán Guatemala</p>
+                    <p>📞 PBX: (502) 7955-2575</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-plaza.jpg' %}" alt="Agencia Plaza">
-                    <h3>Agencia Plaza</h3>
-                    <p>📍 Plaza Comercial, 2do Nivel Local 203</p>
-                    <p>📞 (502) 7761-2351</p>
-                    <p>⏰ Lunes a Domingo: 9:00 AM - 7:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-cotzumalguapa.jpg' %}" alt="Sta. Lucía Cotzumalguapa">
+                    <h3>Sta. Lucía Cotzumalguapa</h3>
+                    <p>📍 3a. Calle 1-116 Zona 1, Santa Lucia Cotzumalguapa Escuintla</p>
+                    <p>📞 PBX: (502) 7955-2450</p>
                 </div>
                 
                 <div class="branch-card">
-                    <img src="{% load static %}{% static 'videos/img/agencia-universitaria.jpg' %}" alt="Agencia Universitaria">
-                    <h3>Agencia Universitaria</h3>
-                    <p>📍 Campus Universidad, Edificio B-12</p>
-                    <p>📞 (502) 7761-2352</p>
-                    <p>⏰ Lunes a Viernes: 10:00 AM - 4:00 PM</p>
+                    <img src="{% load static %}{% static 'videos/img/agencia-guineales.jpg' %}" alt="Aldea Guineales">
+                    <h3>Aldea Guineales</h3>
+                    <p>📍 Sector Campo, camino al cementerio Aldea Guineales, Boca Costa, Sololá</p>
+                    <p>📞 PBX: (502) 7955-2410</p>
+                </div>
+                
+                <div class="branch-card">
+                    <img src="{% load static %}{% static 'videos/img/agencia-mazatenango.jpg' %}" alt="Mazatenango">
+                    <h3>Mazatenango</h3>
+                    <p>📍 9a. Calle Avenida La Libertad a un costado de Maxims</p>
+                    <p>📞 PBX: (502) 7955-2420</p>
+                </div>
+                
+                <div class="branch-card">
+                    <img src="{% load static %}{% static 'videos/img/agencia-comalapa.jpg' %}" alt="San Juan Comalapa">
+                    <h3>San Juan Comalapa</h3>
+                    <p>📍 1a. Avenida 0-83 Zona 3 San Juan Comalapa</p>
+                    <p>📞 PBX: (502) 7955-2430</p>
                 </div>
             </div>
         </div>
@@ -260,7 +255,7 @@
                     <h3>📞 Información de Contacto</h3>
                     <div class="contact-item">
                         <strong>📍 Dirección Principal:</strong>
-                        <p>4ta Calle 3-45 Zona 1, Cantel, Quetzaltenango</p>
+                        <p>4ta Calle 3-45 Zona 1, Solola, Solola</p>
                     </div>
                     <div class="contact-item">
                         <strong>📞 Teléfono Central:</strong>
@@ -300,26 +295,17 @@
                     <p>Tu institución financiera de confianza</p>
                 </div>
                 
-                <div class="footer-links">
-                    <h4>Enlaces Rápidos</h4>
-                    <ul>
-                        <li><a href="#nosotros">Nosotros</a></li>
-                        <li><a href="#servicios">Servicios</a></li>
-                        <li><a href="#agencias">Agencias</a></li>
-                        <li><a href="#contacto">Contacto</a></li>
-                    </ul>
-                </div>
-                
                 <div class="footer-contact">
                     <h4>Contacto</h4>
-                    <p>📍 Cantel, Quetzaltenango</p>
-                    <p>📞 (502) 7761-2345</p>
-                    <p>✉️ info@adicla.org.gt</p>
+                    <p>📍 Solola</p>
+                    <p>📍 6a. Avenida 6-30 zona 1 Barrio San Antonio, Sololá</p>
+                    <p>📞 PBX (502) 7955-2500</p>
+                    <p>✉️ www.adicla.org.gt</p>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral de Cantel. Todos los derechos reservados.</p>
+                <p>&copy; 2025 ADICLA - Asociación de Desarrollo Integral Cuenca del Lago de Atitlán. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
