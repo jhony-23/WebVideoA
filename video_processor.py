@@ -37,7 +37,19 @@ def process_video_queue():
                 if processor.transcode_to_hls():
                     # Actualizar metadatos
                     video_info = processor._get_video_info()
-                    duration = float(video_info['streams'][0].get('duration', 0))
+                    # Extraer duración preferentemente desde format.duration (ffprobe suele ponerla ahí)
+                    duration = 0.0
+                    if video_info:
+                        # Preferir format.duration, luego stream.duration
+                        fmt_dur = video_info.get('format', {}).get('duration')
+                        stream_dur = None
+                        streams = video_info.get('streams') or []
+                        if streams:
+                            stream_dur = streams[0].get('duration')
+                        try:
+                            duration = float(fmt_dur) if fmt_dur is not None else float(stream_dur or 0.0)
+                        except Exception:
+                            duration = float(stream_dur or 0.0)
                     
                     # Verificar calidades generadas
                     qualities = []

@@ -156,12 +156,15 @@ class VideoProcessor:
                 variant_path = os.path.join(self.output_dir, f"{quality}.m3u8")
                 segments_pattern = os.path.join(self.output_dir, f"{quality}_%03d.ts")
 
+                # Construir comando ffmpeg para la variante
+                # Usamos scale a las dimensiones calculadas (t_w,t_h) ya adaptadas
+                # por _adapt_to_source para mantener aspect ratio y forzar pares.
                 cmd = [
                     'ffmpeg', '-y', '-i', self.input_path,
                     '-c:v', self.BASE_CONFIG['video_codec'],
                     '-preset', self.BASE_CONFIG['preset'],
                     '-tune', self.BASE_CONFIG['tune'],
-                    '-vf', f'scale={t_w}:{t_h}:force_original_aspect_ratio=decrease',
+                    '-vf', f'scale={t_w}:{t_h}',
                     '-b:v', self._format_bitrate(v_kbps),
                     '-maxrate', self._format_bitrate(maxrate),
                     '-bufsize', self._format_bitrate(bufsize),
