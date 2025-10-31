@@ -1,10 +1,12 @@
 import os
+import shutil
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 from .models import Media
 from .utils import VideoProcessor
 import threading
+from pathlib import Path
 
 # Cuando se elimina un registro, borrar también el archivo físico
 @receiver(post_delete, sender=Media)
@@ -52,28 +54,44 @@ def replace_media_file(sender, instance, **kwargs):
 def process_video(media_instance):
     """Procesa un video en segundo plano"""
     try:
-        # Asegurar que FFmpeg esté en el PATH
-        import os
-        os.environ["PATH"] = r"C:\Program Files\ffmpeg\bin;" + os.environ["PATH"]
-        
-        processor = VideoProcessor(media_instance.file.path)
-        if processor.transcode_to_hls():
-            # Actualizar el modelo con la información del HLS
+        previous_hls_path = media_instance.hls_path
+        ffmpeg_bin_dir = os.getenv('FFMPEG_BIN_DIR')
+        if ffmpeg_bin_dir:
+            os.environ['PATH'] = f"{ffmpeg_bin_dir}{os.pathsep}" + os.environ.get('PATH', '')
+
+        processor = VideoProcessor(media_instance.file.path, media_id=media_instance.pk)
+        success, metadata = processor.transcode_to_hls()
+
+        if success:
+            new_hls_path = metadata.get('relative_output_dir')
+            if previous_hls_path and new_hls_path and previous_hls_path != new_hls_path:
+                old_dir = Path(settings.MEDIA_ROOT) / previous_hls_path
+                if old_dir.exists() and old_dir.is_dir():
+                    shutil.rmtree(old_dir, ignore_errors=True)
+
             Media.objects.filter(pk=media_instance.pk).update(
                 is_stream_ready=True,
                 stream_status='ready',
-                hls_path=os.path.relpath(processor.output_dir, settings.MEDIA_ROOT),
-                available_qualities=list(processor.QUALITY_PROFILES.keys())
+                hls_path=new_hls_path,
+                available_qualities=metadata.get('qualities', []),
+                duration=metadata.get('duration') or 0.0,
+                width=metadata.get('width'),
+                height=metadata.get('height'),
+                error_message=''
             )
         else:
             Media.objects.filter(pk=media_instance.pk).update(
                 stream_status='failed',
-                error_message='Error en la transcodificación'
+                is_stream_ready=False,
+                error_message=metadata.get('error', 'Error en la transcodificación'),
+                available_qualities=[]
             )
     except Exception as e:
         Media.objects.filter(pk=media_instance.pk).update(
             stream_status='failed',
-            error_message=str(e)
+            is_stream_ready=False,
+            error_message=str(e),
+            available_qualities=[]
         )
 
 # Cuando se guarda un nuevo video, iniciar el procesamiento

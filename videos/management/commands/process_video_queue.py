@@ -1,5 +1,6 @@
 import time
-import os
+import shutil
+from pathlib import Path
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from videos.models import Media
@@ -14,7 +15,7 @@ class Command(BaseCommand):
         while True:
             # Buscar videos pendientes
             pending_videos = Media.objects.filter(
-                file__endswith='.mp4',
+                media_type='video',
                 is_stream_ready=False,
                 stream_status='pending'
             ).order_by('uploaded_at')[:1]  # Procesar uno a la vez
@@ -25,46 +26,48 @@ class Command(BaseCommand):
                 
                 try:
                     # Marcar como en procesamiento
-                    video.stream_status = 'processing'
-                    video.save()
-                    
-                    # Procesar el video
-                    input_path = os.path.join(settings.MEDIA_ROOT, str(video.file))
-                    processor = VideoProcessor(input_path)
-                    result = processor.transcode_to_hls()
-                    
-                    if result:
-                        # Actualizar metadatos
-                        video_info = processor._get_video_info()
-                        duration = float(video_info['streams'][0].get('duration', 0))
-                        
-                        # Determinar calidades generadas
-                        available_qualities = []
-                        for quality in ['720p', '1080p', '480p']:
-                            if os.path.exists(os.path.join(processor.output_dir, f'{quality}.m3u8')):
-                                available_qualities.append(quality)
-                        
-                        # Actualizar el video
-                        video.is_stream_ready = True
-                        video.stream_status = 'completed'
-                        video.hls_path = f'hls/{video.file.name.replace(".mp4", "")}/master.m3u8'
-                        video.available_qualities = available_qualities
-                        video.duration = duration
-                        video.save()
-                        
+                    Media.objects.filter(pk=video.pk).update(
+                        stream_status='processing',
+                        error_message=''
+                    )
+
+                    processor = VideoProcessor(video.file.path, media_id=video.pk)
+                    previous_hls_path = video.hls_path
+                    success, metadata = processor.transcode_to_hls()
+
+                    if success:
+                        Media.objects.filter(pk=video.pk).update(
+                            is_stream_ready=True,
+                            stream_status='ready',
+                            hls_path=metadata.get('relative_output_dir'),
+                            available_qualities=metadata.get('qualities', []),
+                            duration=metadata.get('duration') or 0.0,
+                            width=metadata.get('width'),
+                            height=metadata.get('height'),
+                            error_message=''
+                        )
+                        new_hls_path = metadata.get('relative_output_dir')
+                        if previous_hls_path and new_hls_path and previous_hls_path != new_hls_path:
+                            old_dir = Path(settings.MEDIA_ROOT) / previous_hls_path
+                            shutil.rmtree(old_dir, ignore_errors=True)
                         self.stdout.write(self.style.SUCCESS(
                             f'✓ Video {video.file.name} procesado exitosamente'
                         ))
                     else:
-                        video.stream_status = 'error'
-                        video.error_message = 'Error en la transcodificación'
-                        video.save()
-                        
-                except Exception as e:
-                    video.stream_status = 'error'
-                    video.error_message = str(e)
-                    video.save()
-                    self.stdout.write(self.style.ERROR(f'Error: {str(e)}'))
+                        Media.objects.filter(pk=video.pk).update(
+                            stream_status='failed',
+                            is_stream_ready=False,
+                            available_qualities=[],
+                            error_message=metadata.get('error', 'Error en la transcodificación')
+                        )
+
+                except Exception as exc:
+                    Media.objects.filter(pk=video.pk).update(
+                        stream_status='failed',
+                        is_stream_ready=False,
+                        error_message=str(exc)
+                    )
+                    self.stdout.write(self.style.ERROR(f'Error: {str(exc)}'))
             
             # Esperar antes de la siguiente verificación
             time.sleep(10)  # 10 segundos entre verificaciones

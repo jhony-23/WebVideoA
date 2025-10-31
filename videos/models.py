@@ -4,9 +4,28 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 import os
 import json
+import uuid
+from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
+from django.utils.text import slugify
 from django.urls import reverse
+
+
+def media_upload_to(instance, filename):
+    """Generate a structured upload path inside MEDIA_ROOT/uploads."""
+    timestamp = timezone.now()
+    base_name = Path(filename).stem
+    extension = Path(filename).suffix
+    safe_name = slugify(base_name) or 'media'
+    unique_suffix = uuid.uuid4().hex[:8]
+    new_name = f"{safe_name}-{unique_suffix}{extension}" if extension else f"{safe_name}-{unique_suffix}"
+    return os.path.join(
+        'uploads',
+        timestamp.strftime('%Y'),
+        timestamp.strftime('%m'),
+        new_name
+    )
 
 class PlaylistState(models.Model):
     """Estado global de la reproducción sincronizada"""
@@ -125,7 +144,7 @@ class Media(models.Model):
     )
 
     title = models.CharField(max_length=200)
-    file = models.FileField(upload_to='')  # Carpeta única para videos e imágenes
+    file = models.FileField(upload_to=media_upload_to)  # Carpeta única para videos e imágenes
     media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     

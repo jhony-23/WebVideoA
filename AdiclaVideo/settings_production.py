@@ -1,112 +1,44 @@
-from pathlib import Path
-import os
+from .settings import *  # noqa
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-os.environ["PATH"] += os.pathsep + r"C:\ffmpeg\bin"
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = 'django-insecure-0)h94amrf7vl3v70v#^e9o__hpkowcp0z%fn@v(3g09dtez^eh'
+# Ajustes específicos de producción
 DEBUG = False
+ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['192.99.121.227', '172.32.32.30', '127.0.0.1', 'localhost'])
 
-# Permitir estos hosts (IP del servidor y localhost para pruebas locales)
-ALLOWED_HOSTS = ['192.99.121.227', '172.32.32.30', '127.0.0.1', 'localhost']
-
-# Application definition
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'widget_tweaks',
-    'videos.apps.VideosConfig',  # Nuestra app
-
-]
-
-MIDDLEWARE = [
-    # Security primero (recomendación oficial) y luego WhiteNoise
+# Reordenar middleware para incluir WhiteNoise y CacheControl
+base_middleware = [m for m in MIDDLEWARE if m not in {
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'videos.middleware.StreamingMediaMiddleware',  # Middleware de streaming
-    'videos.middleware.CacheControlMiddleware',    # Middleware de caché
+    'videos.middleware.CacheControlMiddleware'
+}]
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    *base_middleware,
 ]
+if 'videos.middleware.CacheControlMiddleware' not in MIDDLEWARE:
+    MIDDLEWARE.append('videos.middleware.CacheControlMiddleware')
 
-ROOT_URLCONF = 'AdiclaVideo.urls'
+STATICFILES_STORAGE = env('DJANGO_STATICFILES_STORAGE', default='whitenoise.storage.CompressedManifestStaticFilesStorage')
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'videos', 'templates')],  # Carpeta templates de la app
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
+# Forzar actualización de base de datos con valores de producción
+DATABASES['default'] = {
+    'ENGINE': env('DJANGO_DB_ENGINE', default='mssql'),
+    'NAME': env('DJANGO_DB_NAME', default='PlataformaVideosA'),
+    'HOST': env('DJANGO_DB_HOST', default='172.32.32.30'),
+    'PORT': env('DJANGO_DB_PORT', default='49789'),
+    'USER': env('DJANGO_DB_USER', default='vm_user'),
+    'PASSWORD': env('DJANGO_DB_PASSWORD', default='Adicla221231'),
+    'OPTIONS': {
+        'driver': env('DJANGO_DB_DRIVER', default='ODBC Driver 17 for SQL Server'),
     },
-]
-
-WSGI_APPLICATION = 'AdiclaVideo.wsgi.application'
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'mssql',
-        'NAME': 'PlataformaVideosA',
-        'HOST': '172.32.32.30',
-        'PORT': '49789',
-        'USER': 'vm_user',
-        'PASSWORD': 'Adicla221231',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-        },
-    }
 }
 
-# Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
-]
-
-# Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'America/Guatemala'
-USE_I18N = True
-USE_TZ = True
-
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-
-# Para producción (collectstatic los copia aquí)
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Para desarrollo: indica dónde buscar los archivos estáticos originales
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'videos', 'static'),
-]
-
-# Carpeta donde se guardarán los videos subidos
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Login settings
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/upload/'
-SESSION_COOKIE_AGE = 28800  # 8 horas en segundos
+# Ajustes de cookies/seguridad recomendados para producción (overridable via .env)
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=True)
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=True)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

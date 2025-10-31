@@ -2,8 +2,11 @@ import os
 import subprocess
 import json
 import logging
-from django.conf import settings
+import shutil
 from pathlib import Path
+
+from django.conf import settings
+from django.utils.text import slugify
 
 class VideoProcessor:
     """Maneja la transcodificación de videos a múltiples calidades usando FFmpeg.
@@ -42,42 +45,80 @@ class VideoProcessor:
             'bufsize_ratio': 1.5,
             'audio_bitrate': 128
         },
-        '480p': {
-            'width': 854,
-            'height': 480,
-            'video_bitrate': 1400,
+        '360p': {
+            'width': 640,
+            'height': 360,
+            'video_bitrate': 900,
             'maxrate_ratio': 1.1,
             'bufsize_ratio': 1.5,
             'audio_bitrate': 96
         }
     }
 
-    def __init__(self, input_path):
-        self.input_path = input_path
-        self.output_dir = self._get_hls_output_dir()
-        self.segment_time = 4  # Segmentos de 4s
-        self.fps = None        # Determinado dinámicamente
-        self.logger_prefix = f"[VideoProcessor:{os.path.basename(input_path)}]"
+    def __init__(self, input_path, media_id=None):
+        self.input_path = Path(str(input_path))
+        self.media_id = media_id
+        self.media_root = Path(settings.MEDIA_ROOT)
+        self.logger_prefix = f"[VideoProcessor:{self.input_path.name}]"
         self.logger = logging.getLogger('videos.ffmpeg')
+        self.segment_time = int(os.getenv('HLS_SEGMENT_SECONDS', '4'))
+        self.fps = None        # Determinado dinámicamente
+
+        self._configure_binaries()
+        self.output_dir = self._get_hls_output_dir()
+
+    def _configure_binaries(self):
+        """Enforce PATH and binary names for ffmpeg/ffprobe."""
+        ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None) or os.getenv('FFMPEG_BIN_DIR')
+        if ffmpeg_dir:
+            current_path = os.environ.get('PATH', '')
+            search_paths = current_path.split(os.pathsep) if current_path else []
+            if ffmpeg_dir not in search_paths:
+                os.environ['PATH'] = os.pathsep.join([ffmpeg_dir, current_path]) if current_path else ffmpeg_dir
+        self.ffmpeg_binary = getattr(settings, 'FFMPEG_BIN', None) or os.getenv('FFMPEG_BIN', 'ffmpeg')
+        self.ffprobe_binary = (
+            getattr(settings, 'FFPROBE_BIN', None)
+            or os.getenv('FFPROBE_BIN')
+            or os.getenv('FFMPEG_PROBE_BIN')
+            or 'ffprobe'
+        )
 
     def _get_hls_output_dir(self):
-        """Genera el directorio de salida para los streams HLS"""
-        base_name = Path(self.input_path).stem
-        hls_dir = Path(settings.MEDIA_ROOT) / 'hls' / base_name
-        return str(hls_dir)
+        """Genera el directorio de salida único para los streams HLS."""
+        safe_name = slugify(self.input_path.stem) or self.input_path.stem or 'stream'
+        if self.media_id:
+            folder = f"media_{self.media_id}"
+            if safe_name:
+                folder = f"{folder}_{safe_name}"
+        else:
+            folder = safe_name
+        return (self.media_root / 'hls' / folder).resolve()
 
-    def _ensure_output_dir(self):
-        """Crea el directorio de salida si no existe"""
-        os.makedirs(self.output_dir, exist_ok=True)
+    def _prepare_output_dir(self):
+        """Limpiar y recrear el directorio de salida."""
+        try:
+            if self.output_dir.exists():
+                shutil.rmtree(self.output_dir)
+            self.output_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as exc:
+            self.logger.warning(f"{self.logger_prefix} No se pudo preparar directorio HLS: {exc}")
+            raise
+
+    @property
+    def relative_output_dir(self):
+        try:
+            return self.output_dir.relative_to(self.media_root).as_posix()
+        except ValueError:
+            return self.output_dir.as_posix()
 
     def _get_video_info(self):
         """Obtiene información ampliada (fps, dimensiones, duración)."""
         cmd = [
-            'ffprobe', '-v', 'error',
+            self.ffprobe_binary, '-v', 'error',
             '-select_streams', 'v:0',
             '-show_entries', 'stream=width,height,duration,r_frame_rate,avg_frame_rate',
             '-show_entries', 'format=duration,bit_rate',
-            '-of', 'json', self.input_path
+            '-of', 'json', self.input_path.as_posix()
         ]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
@@ -117,34 +158,56 @@ class VideoProcessor:
     def _format_bitrate(self, kbps):
         return f"{int(kbps)}k"
 
+    def _extract_duration(self, ffprobe_data):
+        """Obtiene la duración en segundos con tolerancia a valores ausentes."""
+        if not ffprobe_data:
+            return 0.0
+        format_info = ffprobe_data.get('format', {})
+        duration_candidates = [
+            format_info.get('duration'),
+        ]
+        streams = ffprobe_data.get('streams') or []
+        if streams:
+            duration_candidates.append(streams[0].get('duration'))
+        for value in duration_candidates:
+            if value is None:
+                continue
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                continue
+        return 0.0
+
     def transcode_to_hls(self):
         """Transcodifica el video a múltiples calidades HLS de forma robusta."""
-        self._ensure_output_dir()
+        self._prepare_output_dir()
 
         info = self._get_video_info()
         if not info:
             self.logger.error(f"{self.logger_prefix} No se pudo obtener info del video")
-            return False
+            return False, {'error': 'ffprobe_failed'}
 
         stream = info['streams'][0]
         source_w = int(stream.get('width', 0))
         source_h = int(stream.get('height', 0))
         if not source_w or not source_h:
             self.logger.error(f"{self.logger_prefix} Resolución inválida")
-            return False
+            return False, {'error': 'invalid_resolution'}
 
         # Calcular GOP (fps * segment_time)
         fps = self.fps or 25
         gop = max(12, int(fps * self.segment_time))
 
         successful = []
-        master_lines = ['#EXTM3U']
+        variant_meta = {}
+        master_lines = ['#EXTM3U', '#EXT-X-VERSION:3', '#EXT-X-INDEPENDENT-SEGMENTS']
+        frame_rate_str = f"{fps:.3f}".rstrip('0').rstrip('.')
 
         # Ordenar perfiles por resolución descendente
         for quality, profile in sorted(self.QUALITY_PROFILES.items(), key=lambda x: x[1]['width'], reverse=True):
             try:
-                t_w, t_h = self._adapt_to_source(profile['width'], profile['height'], source_w, source_h)
-                if t_w * t_h < (0.20 * source_w * source_h):
+                target_w, target_h = self._adapt_to_source(profile['width'], profile['height'], source_w, source_h)
+                if target_w * target_h < (0.20 * source_w * source_h):
                     self.logger.info(f"{self.logger_prefix} Saltando {quality}, demasiado pequeño vs origen")
                     continue
 
@@ -153,18 +216,15 @@ class VideoProcessor:
                 bufsize = int(v_kbps * profile['bufsize_ratio'])
                 a_kbps = profile['audio_bitrate']
 
-                variant_path = os.path.join(self.output_dir, f"{quality}.m3u8")
-                segments_pattern = os.path.join(self.output_dir, f"{quality}_%03d.ts")
+                variant_manifest = (self.output_dir / f"{quality}.m3u8").as_posix()
+                segments_pattern = (self.output_dir / f"{quality}_%03d.ts").as_posix()
 
-                # Construir comando ffmpeg para la variante
-                # Usamos scale a las dimensiones calculadas (t_w,t_h) ya adaptadas
-                # por _adapt_to_source para mantener aspect ratio y forzar pares.
                 cmd = [
-                    'ffmpeg', '-y', '-i', self.input_path,
+                    self.ffmpeg_binary, '-y', '-i', self.input_path.as_posix(),
                     '-c:v', self.BASE_CONFIG['video_codec'],
                     '-preset', self.BASE_CONFIG['preset'],
                     '-tune', self.BASE_CONFIG['tune'],
-                    '-vf', f'scale={t_w}:{t_h}',
+                    '-vf', f'scale={target_w}:{target_h}',
                     '-b:v', self._format_bitrate(v_kbps),
                     '-maxrate', self._format_bitrate(maxrate),
                     '-bufsize', self._format_bitrate(bufsize),
@@ -174,55 +234,86 @@ class VideoProcessor:
                     '-hls_playlist_type', 'vod',
                     '-hls_flags', 'independent_segments',
                     '-hls_segment_filename', segments_pattern,
-                    '-f', 'hls', variant_path
+                    '-f', 'hls', variant_manifest
                 ]
 
-                self.logger.info(f"{self.logger_prefix} Generando {quality} {t_w}x{t_h} @ {v_kbps}kbps (fps={fps}, gop={gop})")
+                self.logger.info(
+                    f"{self.logger_prefix} Generando {quality} {target_w}x{target_h} @ {v_kbps}kbps (fps={fps}, gop={gop})"
+                )
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
                 if result.returncode != 0:
                     self.logger.error(f"{self.logger_prefix} Error {quality}: {result.stderr[:400]}")
                     continue
-                if not os.path.exists(variant_path):
+                if not Path(variant_manifest).exists():
                     self.logger.error(f"{self.logger_prefix} Variante {quality} no creada")
                     continue
 
-                bandwidth = v_kbps * 1000 + a_kbps * 1000
+                bandwidth = (v_kbps + a_kbps) * 1000
+                avg_bandwidth = max(50000, bandwidth - 50000)
                 master_lines.append(
-                    f"#EXT-X-STREAM-INF:BANDWIDTH={bandwidth},AVERAGE-BANDWIDTH={bandwidth - 50000},RESOLUTION={t_w}x{t_h},CODECS=\"avc1.64001f,mp4a.40.2\""
+                    (
+                        "#EXT-X-STREAM-INF:BANDWIDTH={bw},AVERAGE-BANDWIDTH={avg},RESOLUTION={res},"
+                        "FRAME-RATE={fps},CODECS=\"avc1.64001f,mp4a.40.2\""
+                    ).format(
+                        bw=bandwidth,
+                        avg=avg_bandwidth,
+                        res=f"{target_w}x{target_h}",
+                        fps=frame_rate_str,
+                    )
                 )
                 master_lines.append(f"{quality}.m3u8")
                 successful.append(quality)
+                variant_meta[quality] = {
+                    'width': target_w,
+                    'height': target_h,
+                    'video_bitrate': v_kbps,
+                    'audio_bitrate': a_kbps,
+                }
 
             except subprocess.TimeoutExpired:
                 self.logger.error(f"{self.logger_prefix} Timeout en {quality}")
                 continue
-            except Exception as e:
-                self.logger.exception(f"{self.logger_prefix} Excepción en {quality}: {e}")
+            except Exception as exc:
+                self.logger.exception(f"{self.logger_prefix} Excepción en {quality}: {exc}")
                 continue
 
         if not successful:
             self.logger.error(f"{self.logger_prefix} Ninguna calidad generada")
-            # Limpiar directorio si vacío
             try:
-                import shutil
                 shutil.rmtree(self.output_dir)
             except Exception:
                 pass
-            return False
+            return False, {'error': 'no_variant_generated'}
 
-        master_path = os.path.join(self.output_dir, 'master.m3u8')
-        with open(master_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(master_lines) + '\n')
-        self.logger.info(f"{self.logger_prefix} Master playlist creada con calidades: {', '.join(successful)}")
-        return True
+        master_path = self.output_dir / 'master.m3u8'
+        with master_path.open('w', encoding='utf-8') as manifest:
+            manifest.write('\n'.join(master_lines) + '\n')
+
+        duration = self._extract_duration(info)
+
+        metadata = {
+            'qualities': successful,
+            'variants': variant_meta,
+            'relative_output_dir': self.relative_output_dir,
+            'output_dir': self.output_dir.as_posix(),
+            'duration': duration,
+            'width': source_w,
+            'height': source_h,
+            'fps': fps,
+        }
+
+        self.logger.info(
+            f"{self.logger_prefix} Master playlist creada con calidades: {', '.join(successful)}"
+        )
+        return True, metadata
 
     def create_thumbnail(self, time=2):
         """Genera un thumbnail del video en el segundo especificado"""
-        thumbnail_path = os.path.join(self.output_dir, 'thumbnail.jpg')
+        thumbnail_path = (self.output_dir / 'thumbnail.jpg').as_posix()
         cmd = [
-            'ffmpeg',
+            self.ffmpeg_binary,
             '-y',
-            '-i', self.input_path,
+            '-i', self.input_path.as_posix(),
             '-ss', str(time),
             '-vframes', '1',
             '-vf', 'scale=640:-1',

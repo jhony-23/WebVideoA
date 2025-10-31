@@ -2,6 +2,7 @@ import os
 import sys
 import django
 import time
+import shutil
 from pathlib import Path
 
 # Configurar Django
@@ -19,64 +20,54 @@ def process_video_queue():
     while True:
         # Buscar videos pendientes
         pending = Media.objects.filter(
-            file__endswith='.mp4',
+            media_type='video',
             stream_status='pending'
         ).order_by('uploaded_at').first()
         
         if pending:
             print(f"\nProcesando video: {pending.title}")
             try:
-                # Marcar como procesando
-                pending.stream_status = 'processing'
-                pending.save()
-                
-                # Procesar el video
-                input_path = os.path.join(settings.MEDIA_ROOT, str(pending.file))
-                processor = VideoProcessor(input_path)
-                
-                if processor.transcode_to_hls():
-                    # Actualizar metadatos
-                    video_info = processor._get_video_info()
-                    # Extraer duración preferentemente desde format.duration (ffprobe suele ponerla ahí)
-                    duration = 0.0
-                    if video_info:
-                        # Preferir format.duration, luego stream.duration
-                        fmt_dur = video_info.get('format', {}).get('duration')
-                        stream_dur = None
-                        streams = video_info.get('streams') or []
-                        if streams:
-                            stream_dur = streams[0].get('duration')
-                        try:
-                            duration = float(fmt_dur) if fmt_dur is not None else float(stream_dur or 0.0)
-                        except Exception:
-                            duration = float(stream_dur or 0.0)
-                    
-                    # Verificar calidades generadas
-                    qualities = []
-                    for quality in ['720p', '1080p', '480p']:
-                        if os.path.exists(os.path.join(processor.output_dir, f'{quality}.m3u8')):
-                            qualities.append(quality)
-                    
-                    # Actualizar video
-                    pending.stream_status = 'ready'
-                    pending.is_stream_ready = True
-                    # Guardar solo el directorio base para reconstruir URL correctamente
-                    pending.hls_path = f'hls/{pending.file.name.replace(".mp4", "")}'
-                    pending.available_qualities = qualities
-                    pending.duration = duration
-                    pending.save()
-                    
+                Media.objects.filter(pk=pending.pk).update(
+                    stream_status='processing',
+                    error_message='' 
+                )
+
+                processor = VideoProcessor(pending.file.path, media_id=pending.pk)
+                previous_hls_path = pending.hls_path
+                success, metadata = processor.transcode_to_hls()
+
+                if success:
+                    Media.objects.filter(pk=pending.pk).update(
+                        stream_status='ready',
+                        is_stream_ready=True,
+                        hls_path=metadata.get('relative_output_dir'),
+                        available_qualities=metadata.get('qualities', []),
+                        duration=metadata.get('duration') or 0.0,
+                        width=metadata.get('width'),
+                        height=metadata.get('height'),
+                        error_message=''
+                    )
+                    new_hls_path = metadata.get('relative_output_dir')
+                    if previous_hls_path and new_hls_path and previous_hls_path != new_hls_path:
+                        old_dir = Path(settings.MEDIA_ROOT) / previous_hls_path
+                        shutil.rmtree(old_dir, ignore_errors=True)
                     print(f"✓ Video {pending.title} procesado exitosamente")
                 else:
-                    pending.stream_status = 'failed'
-                    pending.save()
+                    Media.objects.filter(pk=pending.pk).update(
+                        stream_status='failed',
+                        is_stream_ready=False,
+                        available_qualities=[],
+                        error_message=metadata.get('error', 'Error en la transcodificación')
+                    )
                     print(f"✗ Error procesando {pending.title}")
-                    
-            except Exception as e:
-                pending.stream_status = 'failed'
-                pending.error_message = str(e)
-                pending.save()
-                print(f"✗ Error: {str(e)}")
+
+            except Exception as exc:
+                Media.objects.filter(pk=pending.pk).update(
+                    stream_status='failed',
+                    is_stream_ready=False,
+                    error_message=str(exc)
+                )
+                print(f"✗ Error: {str(exc)}")
         
         # Esperar antes de la siguiente verificación
         time.sleep(5)
